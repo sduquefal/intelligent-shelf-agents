@@ -13,12 +13,13 @@ common/config.py
 domain/__init__.py
 domain/summary.py
 domain/terminology.py
+gateways/__init__.py
+gateways/nsg_gateway.py
 intelligent_shelf_agents.egg-info/PKG-INFO
 intelligent_shelf_agents.egg-info/SOURCES.txt
 intelligent_shelf_agents.egg-info/dependency_links.txt
 intelligent_shelf_agents.egg-info/requires.txt
 intelligent_shelf_agents.egg-info/top_level.txt
 repositories/__init__.py
-repositories/nsg_repository.py
 services/__init__.py
 services/analytics_service.py

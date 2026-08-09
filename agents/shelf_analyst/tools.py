@@ -1,18 +1,26 @@
-from services.analytics_service import latest_daily_summary
+from services.analytics_service import AnalyticsService
 
 
-def get_latest_daily_summary(country: str) -> dict:
+analytics_service = AnalyticsService()
+
+
+def get_latest_daily_summary(
+    country: str,
+) -> dict:
     """
-    Get the latest available daily Intelligent Shelf business KPIs.
+    Get the latest available daily Intelligent Shelf KPIs.
 
     Args:
-        country: Country code. Use CL for Chile or PE for Peru.
+        country:
+            Country code.
+            Use CL for Chile or PE for Peru.
 
     Returns:
-        A business-oriented daily summary including:
-        - SNSG / En góndola
-        - Bodega
-        - Quiebre
-        with percentage and count.
+        Business-oriented Intelligent Shelf summary
+        with SNSG, Bodega and Quiebre,
+        including percentages and counts.
     """
-    return latest_daily_summary(country)
+
+    return analytics_service.get_latest_daily_summary(
+        country
+    )
