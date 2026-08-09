@@ -1,0 +1,53 @@
+.node{
+
+    text-align:center;
+
+    transition:.35s;
+
+}
+
+.node-icon{
+
+    width:58px;
+
+    height:58px;
+
+    border-radius:16px;
+
+    margin:auto;
+
+    margin-bottom:16px;
+
+    transition:.35s;
+
+}
+
+.node h3{
+
+    font-size:18px;
+
+}
+
+.node span{
+
+    font-size:13px;
+
+    color:#6c7580;
+
+}
+
+.node.active{
+
+    transform:translateY(-6px);
+
+}
+
+.node.active .node-icon{
+
+    box-shadow:
+
+        0 0 0 6px rgba(120,190,32,.18),
+
+        0 12px 28px rgba(120,190,32,.45);
+
+}

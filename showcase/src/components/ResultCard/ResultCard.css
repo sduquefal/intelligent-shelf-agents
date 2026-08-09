@@ -1,0 +1,100 @@
+.result-card {
+  border-top: 1px solid #e6eaed;
+  padding-top: 24px;
+}
+
+.result-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.result-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+  color: #727d85;
+  margin-bottom: 7px;
+}
+
+.result-top h3 {
+  font-size: 18px;
+  margin-bottom: 3px;
+}
+
+.result-top p {
+  font-size: 12px;
+  color: #7a858e;
+}
+
+.live-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: #5b9e21;
+  background: #edf8e7;
+  padding: 6px 8px;
+  border-radius: 999px;
+}
+
+.primary-result {
+  margin-top: 24px;
+}
+
+.primary-result span {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: #707b84;
+}
+
+.primary-result strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 48px;
+  line-height: 1;
+  color: #62ad2b;
+}
+
+.secondary-results {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.secondary-results div {
+  background: #f8fafb;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.secondary-results span {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #707b84;
+  margin-bottom: 5px;
+}
+
+.secondary-results strong {
+  font-size: 22px;
+}
+
+.bodega {
+  color: #3478d4;
+}
+
+.quiebre {
+  color: #e5484d;
+}
+
+.result-volume {
+  margin-top: 15px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: #f2f8ed;
+  color: #527d32;
+  font-size: 12px;
+  font-weight: 700;
+}

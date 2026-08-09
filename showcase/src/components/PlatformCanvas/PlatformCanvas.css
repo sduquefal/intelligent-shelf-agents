@@ -1,0 +1,168 @@
+.canvas {
+  background: white;
+  border-radius: 18px;
+  border: 1px solid #e8ecef;
+  min-height: 760px;
+  padding: 48px;
+}
+
+.canvas-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  color: #7b8794;
+  margin-bottom: 46px;
+}
+
+/* AGENT */
+
+.agent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 58px;
+}
+
+.agent-icon {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: #eef8e4;
+  color: #78be20;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 30px;
+
+  margin-bottom: 18px;
+}
+
+.agent h2 {
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.agent p {
+  margin-top: 12px;
+  font-size: 16px;
+  color: #6b7280;
+}
+
+/* SERVICES */
+
+.services {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 34px;
+
+  margin-bottom: 56px;
+}
+
+.service-node {
+  text-align: center;
+}
+
+.service-icon {
+  width: 58px;
+  height: 58px;
+
+  margin: 0 auto 16px;
+
+  border-radius: 16px;
+
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+}
+
+.service-node.store .service-icon {
+  background: #78be20;
+}
+
+.service-node.analytics .service-icon {
+  background: #3478d4;
+}
+
+.service-node.alerts .service-icon {
+  background: #e5484d;
+}
+
+.service-node h3 {
+  font-size: 17px;
+  margin-bottom: 5px;
+}
+
+.service-node span {
+  font-size: 13px;
+  color: #707b84;
+}
+
+/* SHARED INTELLIGENCE */
+
+.intelligence-layer {
+  border-top: 1px solid #dce2e6;
+  border-bottom: 1px solid #dce2e6;
+
+  padding: 26px 18px;
+
+  margin-bottom: 46px;
+}
+
+.intelligence-layer h3 {
+  font-size: 17px;
+  margin-bottom: 14px;
+}
+
+.layer-items {
+  display: flex;
+  gap: 26px;
+  flex-wrap: wrap;
+}
+
+.layer-items span {
+  font-size: 13px;
+  color: #6f7982;
+}
+
+/* FOUNDATION */
+
+.foundation-layer {
+  border-top: 4px solid #20252b;
+  padding-top: 26px;
+}
+
+.foundation-layer h3 {
+  font-size: 17px;
+  margin-bottom: 22px;
+}
+
+.foundation-items {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.foundation-items span {
+  font-size: 13px;
+  color: #6f7982;
+}
+
+.intelligence-layer {
+  transition:
+    background 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.35s ease;
+}
+
+.intelligence-layer.active {
+  background: #f7f3ff;
+  border-color: #8b6fcf;
+
+  box-shadow:
+    0 0 0 5px rgba(139, 111, 207, 0.10),
+    0 12px 30px rgba(139, 111, 207, 0.16);
+
+  transform: translateY(-3px);
+}
