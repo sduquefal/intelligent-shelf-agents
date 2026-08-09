@@ -91,3 +91,47 @@ class AnalyticsService:
             "status": "success",
             "summary": summary.to_dict(),
         }
+    
+    def get_store_summary(
+        self,
+        country: str,
+        loc_cod: int,
+    ):
+
+        row = self._nsg_gateway.get_store_daily_summary(
+            country,
+            loc_cod,
+        )
+
+        if row is None:
+            return {
+                "status":"not_found"
+            }
+
+        on_shelf = int(row["n_on_shelf"] or 0)
+        oos_shelf = int(row["n_oos_shelf"] or 0)
+        oos_store = int(row["n_oos_store"] or 0)
+
+        total = on_shelf + oos_shelf + oos_store
+
+        return {
+            "status":"success",
+            "summary":{
+                "country":country,
+                "loc_cod":loc_cod,
+                "date":str(row["alert_date"]),
+                "total":total,
+                "snsg":{
+                    "count":on_shelf,
+                    "percentage":self._percentage(on_shelf,total),
+                },
+                "bodega":{
+                    "count":oos_shelf,
+                    "percentage":self._percentage(oos_shelf,total),
+                },
+                "quiebre":{
+                    "count":oos_store,
+                    "percentage":self._percentage(oos_store,total),
+                },
+            },
+        }

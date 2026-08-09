@@ -1,6 +1,10 @@
 from google.adk.agents import Agent
 
-from .tools import get_latest_daily_summary
+from .tools import (
+    get_latest_daily_summary,
+    get_store_summary,
+    resolve_store,
+)
 
 
 root_agent = Agent(
@@ -63,5 +67,7 @@ Do not expose SQL, BigQuery table names, credentials, or implementation details.
 """,
     tools=[
         get_latest_daily_summary,
+        get_store_summary,
+        resolve_store,
     ],
 )
