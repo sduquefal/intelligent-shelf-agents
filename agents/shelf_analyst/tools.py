@@ -73,3 +73,35 @@ def get_store_summary(
         country=country,
         loc_cod=loc_cod,
     )
+def compare_store_daily(
+    country: str,
+    loc_cod: int,
+) -> dict:
+    """ Compare a store's latest KPIs with the previous available day."""
+
+    return analytics_service.compare_store_daily(
+        country=country,
+        loc_cod=loc_cod,
+    )
+def get_store_trend(
+    country: str,
+    loc_cod: int,
+    days: int = 7,
+) -> dict:
+    """Get the Intelligent Shelf trend for a store."""
+
+    return analytics_service.get_store_trend(
+        country=country,
+        loc_cod=loc_cod,
+        days=days,
+    )
+def get_store_ranking(
+    country: str,
+    limit: int = 5,
+) -> dict:
+    """Get stores with the lowest SNSG for the latest available day."""
+
+    return analytics_service.get_store_ranking(
+        country=country,
+        limit=limit,
+    )

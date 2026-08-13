@@ -4,6 +4,9 @@ from .tools import (
     get_latest_daily_summary,
     get_store_summary,
     resolve_store,
+    compare_store_daily,
+    get_store_trend,
+    get_store_ranking,
 )
 
 
@@ -69,5 +72,8 @@ Do not expose SQL, BigQuery table names, credentials, or implementation details.
         get_latest_daily_summary,
         get_store_summary,
         resolve_store,
+        compare_store_daily,
+        get_store_trend,
+        get_store_ranking
     ],
 )
