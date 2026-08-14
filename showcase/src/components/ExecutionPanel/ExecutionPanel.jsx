@@ -1,14 +1,22 @@
 import "./ExecutionPanel.css";
 
 import ResultCard from "../ResultCard/ResultCard";
-import { executionConfig } from "../../data/executionConfig";
 
 export default function ExecutionPanel({
+  scenario,
+  scenarioIndex,
+  scenarios,
   steps,
   running,
+  onSelectScenario,
   onStart,
 }) {
-  const { question, result } = executionConfig;
+  const { question, result } = scenario;
+
+  const finished =
+    !running &&
+    steps.length > 0 &&
+    steps.every((step) => step.status === "complete");
 
   return (
     <aside className="execution-panel">
@@ -36,6 +44,28 @@ export default function ExecutionPanel({
 
       <div className="question-block">
         <span className="question-label">
+          Scenario
+        </span>
+
+        <select
+          className="scenario-select"
+          value={scenarioIndex}
+          onChange={(event) =>
+            onSelectScenario(Number(event.target.value))
+          }
+          disabled={running}
+        >
+          {scenarios.map((item, index) => (
+            <option
+              key={item.id}
+              value={index}
+            >
+              {item.question}
+            </option>
+          ))}
+        </select>
+
+        <span className="question-label question-label-spaced">
           Question
         </span>
 
@@ -81,14 +111,12 @@ export default function ExecutionPanel({
         ))}
       </div>
 
-      {!running &&
-        steps.every(
-          (step) => step.status === "complete"
-        ) && (
-          <>
-            <ResultCard result={result} />
-          </>
-        )}
+      {finished && (
+        <ResultCard
+          result={result}
+          resultType={scenario.resultType}
+        />
+      )}
     </aside>
   );
 }

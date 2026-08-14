@@ -1,23 +1,40 @@
 import { useEffect, useState } from "react";
-import { executionConfig } from "../data/executionConfig";
+import { executionScenarios } from "../data/executionConfig";
 
 export default function useExecution() {
+  const [scenarioIndex, setScenarioIndex] = useState(0);
+  const scenario = executionScenarios[scenarioIndex];
+
   const [steps, setSteps] = useState(
-    executionConfig.steps.map((step) => ({
+    scenario.steps.map((step) => ({
       ...step,
       status: "pending",
     }))
   );
 
   const [running, setRunning] = useState(false);
-
   const [currentTarget, setCurrentTarget] = useState(null);
+
+  function selectScenario(index) {
+    if (running) return;
+
+    setScenarioIndex(index);
+
+    setSteps(
+      executionScenarios[index].steps.map((step) => ({
+        ...step,
+        status: "pending",
+      }))
+    );
+
+    setCurrentTarget(null);
+  }
 
   function start() {
     if (running) return;
 
     setSteps(
-      executionConfig.steps.map((step) => ({
+      scenario.steps.map((step) => ({
         ...step,
         status: "pending",
       }))
@@ -32,60 +49,51 @@ export default function useExecution() {
 
     const timers = [];
 
-    executionConfig.steps.forEach((step, index) => {
-      const timer = setTimeout(() => {
-        setSteps((previousSteps) =>
-          previousSteps.map((currentStep, currentIndex) => {
-            if (currentIndex < index) {
-              return {
-                ...currentStep,
-                status: "complete",
-              };
-            }
-
-            if (currentIndex === index) {
-              return {
-                ...currentStep,
-                status: "active",
-              };
-            }
-
-            return {
+    scenario.steps.forEach((step, index) => {
+      timers.push(
+        setTimeout(() => {
+          setSteps((previousSteps) =>
+            previousSteps.map((currentStep, currentIndex) => ({
               ...currentStep,
-              status: "pending",
-            };
-          })
-        );
+              status:
+                currentIndex < index
+                  ? "complete"
+                  : currentIndex === index
+                  ? "active"
+                  : "pending",
+            }))
+          );
 
-        setCurrentTarget(step.target);
-      }, index * 1200);
-
-      timers.push(timer);
+          setCurrentTarget(step.target);
+        }, index * 1200)
+      );
     });
 
-    const finishTimer = setTimeout(() => {
-      setSteps((previousSteps) =>
-        previousSteps.map((step) => ({
-          ...step,
-          status: "complete",
-        }))
-      );
+    timers.push(
+      setTimeout(() => {
+        setSteps((previousSteps) =>
+          previousSteps.map((step) => ({
+            ...step,
+            status: "complete",
+          }))
+        );
 
-      setCurrentTarget(null);
-      setRunning(false);
-    }, executionConfig.steps.length * 1200);
+        setCurrentTarget(null);
+        setRunning(false);
+      }, scenario.steps.length * 1200)
+    );
 
-    timers.push(finishTimer);
-
-    return () => {
-      timers.forEach(clearTimeout);
-    };
+    return () => timers.forEach(clearTimeout);
   }, [running]);
 
   return {
+    scenario,
+    scenarioIndex,
+    scenarios: executionScenarios,
     steps,
     running,
     currentTarget,
+    selectScenario,
     start,
   };
 }
