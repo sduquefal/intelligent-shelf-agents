@@ -1,6 +1,5 @@
 from services.analytics_service import AnalyticsService
 
-
 analytics_service = AnalyticsService()
 
 
