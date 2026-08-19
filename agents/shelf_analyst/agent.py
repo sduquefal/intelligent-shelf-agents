@@ -1,5 +1,6 @@
 from google.adk.agents import Agent
-
+from google.adk.models.lite_llm import LiteLlm
+from common.models import get_default_model
 from .tools import (
     get_latest_daily_summary,
     get_store_summary,
@@ -8,11 +9,12 @@ from .tools import (
     get_store_trend,
     get_store_ranking,
 )
-
+import litellm
+litellm._turn_on_debug()
 
 root_agent = Agent(
     name="shelf_analyst",
-    model="gemini-2.5-flash",
+    model=get_default_model(),
     description=(
         "AI analyst specialized in Intelligent Shelf "
         "and retail on-shelf availability."
