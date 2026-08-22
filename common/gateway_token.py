@@ -1,19 +1,23 @@
 from google.cloud import secretmanager
+import os
 
 
 def get_gateway_token() -> str:
-    client = secretmanager.SecretManagerServiceClient()
+    return os.environ["AI_GW_API_KEY"]
 
-    name = (
-        "projects/"
-        "corp-stro-salesinventory-prod/"
-        "secrets/"
-        "genai-gateway-jwt-prod/"
-        "versions/latest"
-    )
+# def get_gateway_token() -> str:
+#     client = secretmanager.SecretManagerServiceClient()
 
-    response = client.access_secret_version(
-        request={"name": name}
-    )
+    # name = (
+    #     "projects/"
+    #     "corp-stro-salesinventory-prod/"
+    #     "secrets/"
+    #     "genai-gateway-jwt-prod/"
+    #     "versions/latest"
+    # )
 
-    return response.payload.data.decode()
+    # response = client.access_secret_version(
+    #     request={"name": name}
+    # )
+
+    # return response.payload.data.decode()

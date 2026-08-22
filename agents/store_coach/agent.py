@@ -1,4 +1,5 @@
 from google.adk.agents import Agent
+from common.models import get_default_model
 
 from .tools import (
     diagnose_store,
@@ -8,7 +9,7 @@ from .tools import (
 
 root_agent = Agent(
     name="store_coach",
-    model="gemini-2.5-flash",
+    model=get_default_model(),
     description=(
 
         "AI coach specialized in operational "
