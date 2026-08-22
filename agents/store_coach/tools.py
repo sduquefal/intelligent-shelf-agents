@@ -54,10 +54,15 @@ def generate_action_plan(
         country=country,
     )
 
-    if "summary" not in diagnosis:
-        return diagnosis
+    summary_result = diagnosis["summary"]
 
-    summary = diagnosis["summary"]["summary"]
+    if summary_result.get("status") != "success":
+        return {
+            "status": "summary_not_available",
+            "diagnosis": diagnosis,
+        }
+
+    summary = summary_result["summary"]
 
     snsg = summary["snsg"]["percentage"]
 
