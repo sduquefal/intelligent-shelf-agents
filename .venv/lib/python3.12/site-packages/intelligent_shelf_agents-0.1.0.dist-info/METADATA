@@ -1,9 +1,0 @@
-Metadata-Version: 2.4
-Name: intelligent-shelf-agents
-Version: 0.1.0
-Summary: Intelligent Shelf AI multi-agent platform
-Requires-Python: >=3.12
-Requires-Dist: google-adk>=2.6.3
-Requires-Dist: google-cloud-bigquery>=3.43.0
-Requires-Dist: google-genai
-Requires-Dist: python-dotenv

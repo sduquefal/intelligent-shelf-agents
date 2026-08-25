@@ -1,0 +1,14 @@
+# Local environment
+.venv/
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# ADK
+.adk/
+
+# Local IDE
+.vscode/
+.idea/
