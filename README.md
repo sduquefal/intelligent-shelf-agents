@@ -2,33 +2,110 @@
 
 **Active Development (MVP)**
 
-# Intelligent Shelf AI Platform
+# ISPilot
 
-An enterprise-grade AI platform for retail operations built on Google ADK, Vertex AI and BigQuery.
+ISPilot is an enterprise AI platform designed to provide retail business users with natural language access to Intelligent Shelf operational data.
 
-The platform enables business users to interact with Intelligent Shelf data using natural language, transforming operational metrics into actionable business insights.
+The platform transforms operational metrics into actionable business insights through a specialized multi-agent architecture built on:
+
+- Google ADK
+- Vertex AI Agent Engine
+- Gemini
+- BigQuery
+- Secret Manager
+
+Instead of navigating dashboards, reports, or SQL queries, users can interact directly with retail data using natural language.
 
 ---
 
-# Vision
+# Business Vision
 
-Intelligent Shelf AI Platform is designed as a multi-agent system where each AI agent specializes in a different business capability while sharing the same business services and data layer.
+ISPilot is not a chatbot.
 
-Instead of building isolated chatbots, the objective is to build reusable business services that can be consumed by multiple AI agents, dashboards and APIs.
+ISPilot is a business intelligence platform powered by AI agents.
+
+The objective is to create reusable business capabilities that can be consumed through:
+
+- AI Agents
+- APIs
+- Microsoft Teams
+- Copilot Studio
+- Future Enterprise Applications
+
+Business users should be able to ask:
+
+```text
+How is Talca Colin performing?
+
+How can Talca Colin improve?
+
+What are today's priorities?
+
+Which stores need immediate attention?
+```
+
+without requiring dashboards, reports or analyst intervention.
+
+---
+
+# What Makes ISPilot Different
+
+## Traditional Model
+
+```text
+Business User
+      │
+      ▼
+ Dashboard
+      │
+      ▼
+  Analyst
+      │
+      ▼
+ Decision
+```
+
+## ISPilot Model
+
+```text
+Business User
+        │
+        ▼
+  Coordinator Agent
+        │
+        ▼
+ Specialized Agent
+        │
+        ▼
+ Business Services
+        │
+        ▼
+    BigQuery
+        │
+        ▼
+ Business Insight
+```
+
+Benefits:
+
+- Faster decision making
+- Reduced analyst dependency
+- Consistent recommendations
+- Natural language interaction
+- Reusable business services
 
 ---
 
 # Current Architecture
 
 ```text
-                    Intelligent Shelf AI Platform
+                    ISPilot
 
-                    User Interfaces
+                User Interfaces
 
       Teams │ Web │ Looker │ API │ Future Apps
                         │
-                Google ADK Agents
-                        │
+                        ▼
                  Coordinator Agent
                         │
         ┌───────────────┼───────────────┐
@@ -50,42 +127,124 @@ Instead of building isolated chatbots, the objective is to build reusable busine
 
 # Multi-Agent Architecture
 
-The platform uses a hierarchical multi-agent architecture implemented with Google ADK.
+ISPilot uses a hierarchical multi-agent architecture implemented with Google ADK.
 
 The Coordinator Agent acts as the single entry point and delegates requests to specialized business agents.
 
-Current agents:
+## Agent Responsibilities
 
-- Coordinator Agent
-- Shelf Analyst
-- Store Coach
+| Agent | Business Question |
+|---------|---------|
+| Coordinator | Who should answer? |
+| Shelf Analyst | What is happening? |
+| Store Coach | What should I do? |
+| Root Cause Agent | Why is it happening? *(future)* |
+| Executive Agent | What does it mean for the business? *(future)* |
 
-Planned agents:
+---
 
-- Executive Agent
-- Root Cause Agent
+## Coordinator Agent
 
-Example flow:
+Responsibilities:
+
+- Intent detection
+- Agent routing
+- Delegation
+- Conversation orchestration
+
+Coordinator does **not**:
+
+- Query BigQuery
+- Execute business logic
+- Generate recommendations
+
+Its responsibility is orchestration.
+
+---
+
+## Shelf Analyst
+
+Mission:
+
+```text
+What is happening?
+```
+
+Examples:
+
+```text
+How is Chile today?
+
+How is Talca Colin performing?
+
+What are the rankings?
+
+What are the trends?
+
+Compare today versus yesterday.
+```
+
+Current Capabilities:
+
+- Country Summary
+- Store Summary
+- Store Name Resolution
+- Store Code Resolution
+- Ambiguous Store Detection
+- Rankings
+- Daily Comparisons
+- Historical Trends
+- Natural Language Analytics
+
+Example Flow:
 
 ```text
 User
-  │
-  ▼
-Coordinator Agent
-  │
-  ▼
+ │
+ ▼
+Coordinator
+ │
+ ▼
 Shelf Analyst
-  │
-  ▼
+ │
+ ▼
 Business Services
-  │
-  ▼
+ │
+ ▼
 BigQuery
 ```
 
-The Coordinator never implements business analytics directly.
+---
 
-Its responsibility is orchestration and delegation.
+## Store Coach
+
+Mission:
+
+```text
+What should I do?
+```
+
+Examples:
+
+```text
+How can Talca Colin improve?
+
+What should the manager do?
+
+What actions should be prioritized?
+
+What should be fixed first?
+```
+
+Current Capabilities:
+
+- Operational Recommendations
+- Store Improvement Guidance
+- Corrective Actions
+- Prioritization Support
+- Action Plans
+
+Store Coach consumes analytical outputs and converts them into actionable recommendations.
 
 ---
 
@@ -133,7 +292,7 @@ intelligent-shelf-agents/
 | Business Term | Technical Metric |
 |--------------|------------------|
 | SNSG | N_ON_SHELF |
-| En góndola | ON_SHELF |
+| En Góndola | ON_SHELF |
 | Bodega | OOS_SHELF |
 | Quiebre | OOS_STORE |
 
@@ -145,16 +304,18 @@ Business users should interact using business terminology rather than technical 
 
 ## Shelf Analyst
 
-Current capabilities:
+### Current Capabilities
 
-- Country summary
-- Store summary
-- Store name resolution
-- Store code resolution
-- Ambiguous store detection
-- Natural language analytics
+- Country KPIs
+- Store KPIs
+- Store Name Resolution
+- Store Code Resolution
+- Rankings
+- Daily Comparisons
+- Historical Trends
+- Natural Language Analytics
 
-Examples:
+### Examples
 
 ```text
 How is Chile today?
@@ -164,20 +325,23 @@ How is store 101?
 How is San Bernardo Plaza?
 
 How is San Bernardo?
+
+What are the worst performing stores?
 ```
 
 ---
 
 ## Store Coach
 
-Current capabilities:
+### Current Capabilities
 
-- Operational recommendations
-- Store improvement guidance
-- Corrective actions
-- Prioritization support
+- Recommendations
+- Prioritization
+- Operational Guidance
+- Action Plans
+- Store Coaching
 
-Examples:
+### Examples
 
 ```text
 How can store 101 improve?
@@ -185,6 +349,8 @@ How can store 101 improve?
 What should I do to improve SNSG?
 
 What are the main priorities for this store?
+
+What actions should be taken first?
 ```
 
 ---
@@ -202,11 +368,48 @@ What are the main priorities for this store?
 
 ## Architectural Patterns
 
+- Multi-Agent Architecture
 - Clean Architecture
 - Gateway Pattern
 - Service Layer
 - Domain Objects
-- Multi-Agent Architecture
+- Coordinator Orchestration Pattern
+
+---
+
+# Current Status
+
+## Operational
+
+✅ Coordinator Agent
+
+✅ Shelf Analyst
+
+✅ Store Coach
+
+✅ Vertex AI Agent Engine
+
+✅ BigQuery Integration
+
+✅ Secret Manager Integration
+
+✅ Multi-Agent Routing
+
+✅ REST API Validation
+
+✅ Vertex Playground Validation
+
+---
+
+## Next Milestones
+
+- Root Cause Agent
+- Executive Agent
+- Recommendation Engine
+- Microsoft Teams Integration
+- Copilot Studio Integration
+- Enterprise APIs
+- Observability & Telemetry
 
 ---
 
@@ -233,7 +436,7 @@ adk deploy agent_engine \
 
 # Runtime Configuration
 
-Agent Engine runtime configuration is centralized in:
+Runtime configuration is centralized in:
 
 ```text
 agents/coordinator/.agent_engine_config.json
@@ -257,29 +460,9 @@ Subagents do not require their own deployment configuration.
 
 ---
 
-# Required Environment Variables
-
-The platform requires the following runtime variables:
-
-```text
-GOOGLE_CLOUD_PROJECT
-
-IS_BQ_PROJECT
-
-IS_BQ_DATASET
-
-IS_NSG_REPORT_VIEW
-
-IS_CLASSIFICATION_VIEW
-```
-
----
-
 # Authentication
 
 ## Runtime Service Account
-
-Production deployments use:
 
 ```text
 sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com
@@ -293,7 +476,7 @@ sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com
 roles/secretmanager.secretAccessor
 ```
 
-Required secret:
+Required Secret:
 
 ```text
 genai-gateway-jwt-prod
@@ -309,6 +492,7 @@ roles/serviceusage.serviceUsageConsumer
 
 ```text
 roles/bigquery.jobUser
+
 roles/bigquery.dataViewer
 ```
 
@@ -316,46 +500,74 @@ roles/bigquery.dataViewer
 
 # Local Development
 
-Use:
+Authentication:
 
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/sa-tot-osa.json
 ```
 
-Production runtimes running in Vertex Agent Engine must use the runtime service account and must not rely on local JSON credentials.
+Start locally:
+
+```bash
+adk web agents/coordinator
+```
+
+Production runtimes running in Vertex Agent Engine must use the runtime service account and should not rely on local JSON credentials.
 
 ---
 
-# Required Dependencies
+# Future Channels
 
-Core dependencies:
+ISPilot is designed to be consumed through:
 
-```toml
-dependencies = [
-    "google-adk>=2.6.3",
-    "google-cloud-bigquery>=3.43.0",
-    "google-cloud-secret-manager>=2.24.0",
-    "google-genai",
-    "python-dotenv"
-]
+- Vertex Playground
+- REST APIs
+- Microsoft Teams
+- Copilot Studio
+- Enterprise Applications
+- Future Mobile Experiences
+
+---
+# Documentation
+
+Additional documentation is available in:
+
+```text
+docs/
+├── ISPilot-Platform-Overview.md
+└── ISPilot-Enterprise-Architecture-And-Vertex-Agent-Engine-Guide.md
+```
+
+## Document Purpose
+
+### ISPilot-Platform-Overview.md
+
+Executive overview of the platform including:
+
+- Business vision
+- Multi-agent architecture
+- Current capabilities
+- Technology stack
+- Strategic roadmap
+
+### ISPilot-Enterprise-Architecture-And-Vertex-Agent-Engine-Guide.md
+
+Technical reference covering:
+
+- Business architecture
+- Multi-agent design
+- ADK implementation
+- Vertex Agent Engine deployment
+- Security model
+- REST API integration
+- Troubleshooting history
+- Operational runbook
+- Teams and Copilot Studio integration strategy
 ```
 
 ---
 
-# Design Principles
-
-- Business-first AI
-- Reusable business services
-- Clean separation between AI and business logic
-- No SQL inside agents
-- Business terminology over technical metrics
-- Multi-agent architecture
-- Agent orchestration through Coordinator
-- Shared services and gateways
-
----
-
-# Roadmap
+# Strategic Roadmap
 
 ## Phase 1 ✅
 
@@ -363,13 +575,11 @@ dependencies = [
 - Store KPIs
 - Store Resolution
 
-## Phase 2
+## Phase 2 ✅
 
-- Historical trends
-- Daily comparisons
-- Weekly comparisons
-- Monthly comparisons
-- Rankings
+- Store Coach
+- Recommendations
+- Action Plans
 
 ## Phase 3
 
@@ -381,23 +591,41 @@ dependencies = [
 
 ## Phase 5
 
-- Store Coach Expansion
+- Recommendation Engine
 
 ## Phase 6
 
-- Recommendation Engine
+- Microsoft Teams Integration
+- Copilot Studio Integration
 
 ## Phase 7
 
-- Teams Integration
 - Enterprise APIs
 - Agent Evaluations
 - Observability & Telemetry
+
+## Phase 8
+
+- Enterprise AI Platform Expansion
 
 ---
 
 # Long-Term Vision
 
-The goal is to evolve Intelligent Shelf into an enterprise AI platform capable of supporting operations, category management, supply chain and executive decision-making through specialized AI agents sharing a common business foundation.
+The goal is to evolve ISPilot into an enterprise AI platform capable of supporting:
 
-The platform should allow business users to interact with operational data through natural language while preserving a clean separation between AI orchestration, business rules, analytics services and data access layers.
+- Retail Operations
+- Category Management
+- Supply Chain
+- Commercial Execution
+- Executive Decision-Making
+
+through a collection of specialized AI agents sharing a common business foundation.
+
+The platform should provide natural language interaction while maintaining a clean separation between:
+
+- AI Orchestration
+- Business Rules
+- Analytics Services
+- Data Access Layers
+- Enterprise Integrations
