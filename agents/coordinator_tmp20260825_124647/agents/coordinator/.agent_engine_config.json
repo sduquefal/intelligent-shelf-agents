@@ -1,0 +1,9 @@
+{
+  "service_account": "sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com",
+  "env_vars": {
+    "IS_BQ_PROJECT": "corp-stro-salesinventory-prod",
+    "IS_BQ_DATASET": "acc_tot_cp_is_prd",
+    "IS_NSG_REPORT_VIEW": "vw_nsg_report",
+    "IS_CLASSIFICATION_VIEW": "vw_smartnsg_classification_cl_v2"
+  }
+}

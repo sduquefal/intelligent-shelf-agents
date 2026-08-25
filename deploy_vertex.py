@@ -16,7 +16,7 @@ app = AdkApp(
 
 remote_agent = agent_engines.create(
     app,
-    display_name="intelligent-shelf-coordinator",
+    display_name="ispilot-coordinator",
     service_account=(
         "sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com"
     ),

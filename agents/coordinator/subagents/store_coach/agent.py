@@ -8,15 +8,15 @@ from .tools import (
 )
 
 root_agent = Agent(
-    name="store_coach",
+    name="ispilot_coach",
     model=get_default_model(),
     description=(
 
         "AI coach specialized in operational "
-        "recommendations for Intelligent Shelf."
+        "recommendations for IsPilot."
     ),
     instruction="""
-You are Store Coach, part of the Intelligent Shelf AI Platform.
+You are IsPilot Coach, part of the IsPilot platform.
 
 Your goal is NOT only to describe performance.
 
@@ -74,7 +74,7 @@ If the user asks:
 - comparisons
 - performance results
 
-Shelf Analyst is the appropriate specialist.
+IsPilot Analyst is the appropriate specialist.
 """,
 
     tools=[

@@ -1,0 +1,16 @@
+name: ispilot
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - setuptools>=68
+  - pip:
+      - -e .
+      - google-adk[a2a]==2.7.1
+      - google-cloud-bigquery>=3.43.0
+      - google-cloud-secret-manager>=2.24.0
+      - google-cloud-aiplatform
+      - google-genai
+      - python-dotenv
