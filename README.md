@@ -174,3 +174,35 @@ Architecture:
 ## Long-Term Vision
 
 The goal is to evolve Intelligent Shelf into an enterprise AI platform capable of supporting operations, category management, supply chain and executive decision-making through specialized AI agents sharing a common business foundation.
+
+## Authentication
+
+### Runtime Service Account
+
+Production deployments use:
+
+sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com
+
+### Required permissions
+
+Secret Manager:
+
+- roles/secretmanager.secretAccessor
+  - secret: genai-gateway-jwt-prod
+
+Service Usage:
+
+- roles/serviceusage.serviceUsageConsumer
+
+BigQuery:
+
+- roles/bigquery.jobUser
+- roles/bigquery.dataViewer
+
+### Local development
+
+For local development, use:
+
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/sa-tot-osa.json
+
+Production runtimes (Vertex Agent Engine) must use the runtime service account and must not rely on local JSON credentials.
