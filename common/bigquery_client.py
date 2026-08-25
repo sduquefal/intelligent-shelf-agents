@@ -1,4 +1,6 @@
 from typing import Any
+import google.auth
+import os
 
 from google.cloud import bigquery
 
@@ -11,6 +13,14 @@ class BigQueryClient:
         project: str = GCP_PROJECT,
         maximum_bytes_billed: int = 1_000_000_000,
     ):
+        credentials, detected_project = google.auth.default()
+
+        self._client = bigquery.Client(
+            project=project,
+            credentials=credentials,
+        )
+        print(credentials.__class__)
+        
         self._client = bigquery.Client(project=project)
         self._maximum_bytes_billed = maximum_bytes_billed
 
@@ -18,8 +28,7 @@ class BigQueryClient:
         self,
         sql: str,
         params: list[Any] | None = None,
-    ) -> list[dict]:
-
+    ) -> list[dict[str, Any]]:
         job_config = bigquery.QueryJobConfig(
             query_parameters=params or [],
             use_query_cache=True,

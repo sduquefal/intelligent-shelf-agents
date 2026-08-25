@@ -63,9 +63,9 @@ class NSGGateway:
             SELECT MAX(alert_date) AS alert_date
             FROM `{NSG_REPORT_TABLE}`
             WHERE country = @country
+            AND loc_cod = @loc_cod
             AND time_frame = 'DAILY'
-        )
-
+        )   
         SELECT
             r.alert_date,
 

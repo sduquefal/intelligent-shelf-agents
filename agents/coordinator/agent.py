@@ -1,13 +1,15 @@
 from google.adk.agents import Agent
+from common.models import get_default_model
 
-from agents.shelf_analyst.agent import root_agent as shelf_analyst
-from agents.store_coach.agent import root_agent as store_coach
-#from agents.executive.agent import root_agent as executive
-#from agents.root_cause.agent import root_agent as root_cause
+from .subagents.shelf_analyst.agent import root_agent as shelf_analyst
+from .subagents.store_coach.agent import root_agent as store_coach
+
+# from .subagents.executive.agent import root_agent as executive
+# from .subagents.root_cause.agent import root_agent as root_cause
 
 root_agent = Agent(
     name="intelligent_shelf",
-    model="gemini-2.5-flash",
+    model=get_default_model(),
     description="Coordinator for Intelligent Shelf agents.",
     instruction="""
 You are the Intelligent Shelf coordinator.
