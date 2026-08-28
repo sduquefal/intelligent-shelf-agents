@@ -1,0 +1,74 @@
+steps:
+  # Step 1: Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-image'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}:${SHORT_SHA}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}:latest'
+      - '-f'
+      - 'Dockerfile'
+      - '.'
+    env:
+      - 'DOCKER_BUILDKIT=1'
+
+  # Step 2: Push to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-image'
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}:${SHORT_SHA}'
+    waitFor: ['build-image']
+
+  # Step 3: Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/gke-deploy'
+    id: 'deploy-cloud-run'
+    args:
+      - 'run'
+      - '--filename=deploy.yaml'
+      - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}:${SHORT_SHA}'
+      - '--location=${_REGION}'
+      - '--output=/workspace/output'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+    waitFor: ['push-image']
+
+  # Step 4: Verify deployment
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'verify-deployment'
+    args:
+      - 'run'
+      - 'services'
+      - 'describe'
+      - '${_SERVICE_NAME}'
+      - '--project=${PROJECT_ID}'
+      - '--region=${_REGION}'
+      - '--format=value(status.url)'
+    waitFor: ['deploy-cloud-run']
+
+# Images to push to registry
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}:latest'
+
+# Build configuration
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+# Substitutions for placeholders
+substitutions:
+  _REGION: 'us-central1'
+  _REPOSITORY: 'ispilot-api'
+  _SERVICE_NAME: 'ispilot-api'
+
+# Timeout for build (20 minutes)
+timeout: '1200s'
+
+# Trigger configuration (Cloud Build UI sets this, but documented here)
+# - name: main
+#   filename: cloudbuild.yaml
+#   description: Build and deploy IsPilot API to Cloud Run
+#   disabled: false

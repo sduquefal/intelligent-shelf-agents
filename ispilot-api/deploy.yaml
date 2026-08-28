@@ -1,0 +1,98 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: ispilot-api
+  namespace: default
+  annotations:
+    run.googleapis.com/ingress: internal
+    run.googleapis.com/ingress-status: internal
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/cpu-throttling: 'false'
+        autoscaling.knative.dev/maxScale: '1000'
+        autoscaling.knative.dev/minScale: '1'
+    spec:
+      serviceAccountName: sa-ispilot-api
+      containers:
+        - image: IMAGE_URL  # Replaced by Cloud Build
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 2
+              memory: 1Gi
+            requests:
+              cpu: 1
+              memory: 512Mi
+          env:
+            # Project configuration
+            - name: GOOGLE_CLOUD_PROJECT
+              value: 'corp-stro-salesinventory-prod'
+            - name: GOOGLE_CLOUD_LOCATION
+              value: 'us-central1'
+            
+            # Vertex AI configuration
+            - name: VERTEX_PROJECT_ID
+              value: 'corp-stro-salesinventory-prod'
+            - name: VERTEX_LOCATION
+              value: 'us-central1'
+            - name: VERTEX_ENGINE_ID
+              value: '5375474415045705728'
+            
+            # Firestore configuration
+            - name: FIRESTORE_COLLECTION
+              value: 'user_sessions'
+            
+            # Session configuration
+            - name: SESSION_TIMEOUT_HOURS
+              value: '8'
+            
+            # API Key from Secret Manager
+            - name: ISPILOT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ispilot-api-key
+                  key: api-key
+          
+          # Health check
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+      
+      # Cloud Run specific settings
+      timeoutSeconds: 300  # 5 minutes timeout
+      concurrency: 100  # Max concurrent requests per container instance
+---
+apiVersion: cloud.googleapis.com/v1
+kind: ServiceAccount
+metadata:
+  name: sa-ispilot-api
+  namespace: default
+  annotations:
+    iam.gke.io/gcp-service-account: sa-ispilot-api@corp-stro-salesinventory-prod.iam.gserviceaccount.com
+---
+apiVersion: cloud.googleapis.com/v1
+kind: IAMPolicyMember
+metadata:
+  name: ispilot-api-invoker
+  namespace: default
+spec:
+  member: serviceAccount:sa-ispilot-api@corp-stro-salesinventory-prod.iam.gserviceaccount.com
+  role: roles/run.invoker
+  resource: ispilot-api

@@ -1,0 +1,46 @@
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.egg-info/
+.Python
+*.egg
+dist/
+build/
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+tests/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Documentation
+docs/
+
+# Misc
+*.log
+.DS_Store
+Makefile
+run.sh
