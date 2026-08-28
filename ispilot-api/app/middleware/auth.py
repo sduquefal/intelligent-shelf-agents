@@ -21,7 +21,7 @@ class APIKeyValidationMiddleware(BaseHTTPMiddleware):
         self.logger = logging.getLogger(__name__)
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
-        """Validate API key and extract user_id."""
+        """Validate authentication via OAuth or API key and extract user_id."""
         # Refresh from runtime environment so app startup does not lock in stale config values.
         self.api_key = self.api_key or os.getenv("ISPILOT_API_KEY")
 
@@ -29,11 +29,25 @@ class APIKeyValidationMiddleware(BaseHTTPMiddleware):
         if request.url.path == "/health":
             return await call_next(request)
 
-        # Extract API key from header
+        # Check for OAuth token first (Authorization: Bearer)
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            # OAuth token is valid; allow request to proceed
+            self.logger.info(
+                "Request authenticated via OAuth",
+                extra={
+                    "method": request.method,
+                    "path": request.url.path,
+                    "client": request.client.host if request.client else "unknown",
+                },
+            )
+            return await call_next(request)
+
+        # Fall back to API key authentication
         api_key = request.headers.get("X-API-Key")
         if not api_key:
             self.logger.warning(
-                "Unauthorized request: missing API key",
+                "Unauthorized request: missing authentication",
                 extra={
                     "method": request.method,
                     "path": request.url.path,
@@ -41,7 +55,7 @@ class APIKeyValidationMiddleware(BaseHTTPMiddleware):
                 },
             )
             return Response(
-                content='{"error_code": "MISSING_API_KEY", "error_message": "X-API-Key header required"}',
+                content='{"error_code": "MISSING_API_KEY", "error_message": "Authorization header or X-API-Key header required"}',
                 status_code=401,
                 media_type="application/json",
             )
