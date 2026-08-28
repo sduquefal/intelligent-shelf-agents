@@ -75,7 +75,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --concurrency 100 \
   --timeout 300 \
   --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${REGION},VERTEX_PROJECT_ID=${PROJECT_ID},VERTEX_LOCATION=${REGION},VERTEX_ENGINE_ID=5375474415045705728,FIRESTORE_COLLECTION=user_sessions,SESSION_TIMEOUT_HOURS=8" \
-  --secret GOOGLE_APPLICATION_CREDENTIALS=cloud-run-secret:latest
+  --set-secrets "GOOGLE_APPLICATION_CREDENTIALS=cloud-run-secret:latest"
 
 echo -e "${GREEN}✓ Deployment completed${NC}"
 echo ""
