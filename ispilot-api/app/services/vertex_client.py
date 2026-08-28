@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import json
 import logging
-import os
 import time
 from typing import Any
 
+import google.auth
+import google.auth.transport.requests
 import requests
-from google.auth.transport.requests import Request
-from google.oauth2 import service_account
 
 from app.config.settings import settings
 
@@ -28,30 +26,19 @@ class VertexAgentClient:
         self.max_retries = max_retries
 
     def _token(self) -> str:
-        """Get valid Google Cloud authentication token."""
-        credentials_input = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-        if not credentials_input:
-            raise ValueError("GOOGLE_APPLICATION_CREDENTIALS is not configured for Vertex access")
-        
+        """Get valid Google Cloud authentication token using Application Default Credentials."""
         try:
-            scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-            
-            # Handle both file path and JSON string (from Cloud Run --set-secrets)
-            if credentials_input.startswith("{"):
-                # JSON string from environment variable
-                creds_dict = json.loads(credentials_input)
-                credentials = service_account.Credentials.from_service_account_info(creds_dict, scopes=scopes)
-            else:
-                # File path
-                credentials = service_account.Credentials.from_service_account_file(credentials_input, scopes=scopes)
-            
-            # Refresh credentials to get valid token
-            credentials.refresh(Request())
+            # Application Default Credentials automatically handles:
+            # - Workload Identity in Cloud Run
+            # - Service account key files in local dev
+            # - gcloud authentication
+            credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+            credentials.refresh(google.auth.transport.requests.Request())
             return credentials.token
         except Exception as exc:
             logger.error(
                 "Authentication failed",
-                extra={"error": str(exc), "credentials_input": credentials_input[:50] if credentials_input else None},
+                extra={"error": str(exc)},
             )
             raise ValueError(f"Failed to authenticate with Vertex: {exc}") from exc
 
