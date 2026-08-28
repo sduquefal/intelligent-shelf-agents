@@ -34,14 +34,16 @@ class VertexAgentClient:
             raise ValueError("GOOGLE_APPLICATION_CREDENTIALS is not configured for Vertex access")
         
         try:
+            scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+            
             # Handle both file path and JSON string (from Cloud Run --set-secrets)
             if credentials_input.startswith("{"):
                 # JSON string from environment variable
                 creds_dict = json.loads(credentials_input)
-                credentials = service_account.Credentials.from_service_account_info(creds_dict)
+                credentials = service_account.Credentials.from_service_account_info(creds_dict, scopes=scopes)
             else:
                 # File path
-                credentials = service_account.Credentials.from_service_account_file(credentials_input)
+                credentials = service_account.Credentials.from_service_account_file(credentials_input, scopes=scopes)
             
             # Refresh credentials to get valid token
             credentials.refresh(Request())
