@@ -7,6 +7,7 @@ import time
 from typing import Any
 
 import requests
+from google.auth.transport.requests import Request
 from google.oauth2 import service_account
 
 from app.config.settings import settings
@@ -42,10 +43,9 @@ class VertexAgentClient:
                 # File path
                 credentials = service_account.Credentials.from_service_account_file(credentials_input)
             
-            if hasattr(credentials, "token"):
-                credentials.refresh(None)
-                return credentials.token
-            raise ValueError("Failed to obtain authentication token")
+            # Refresh credentials to get valid token
+            credentials.refresh(Request())
+            return credentials.token
         except Exception as exc:
             logger.error(
                 "Authentication failed",
