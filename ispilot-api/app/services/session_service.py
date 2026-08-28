@@ -79,16 +79,25 @@ class SessionService:
         Get existing session for user. Returns None if no active session exists.
         Checks session expiration.
         """
-        session_id = self.firestore_store.get_session(user_id=user_id)
-        if session_id:
-            if self._is_session_valid(user_id=user_id):
-                return session_id
-            self.logger.info(
-                f"Session expired for user {user_id}",
-                extra={"user_id": user_id},
-            )
+        try:
+            session_id = self.firestore_store.get_session(user_id=user_id)
+            if session_id:
+                if self._is_session_valid(user_id=user_id):
+                    return session_id
+                self.logger.info(
+                    f"Session expired for user {user_id}",
+                    extra={"user_id": user_id},
+                )
+                return None
             return None
-        return None
+        except Exception as e:
+            # If Firestore fails at runtime, fall back to in-memory
+            if not isinstance(self.firestore_store, InMemorySessionStore):
+                self.logger.warning(
+                    f"Firestore get_session failed, falling back to in-memory: {str(e)}"
+                )
+                self.firestore_store = InMemorySessionStore({})
+            return None
 
     def exists(self, user_id: str) -> bool:
         """Check if a valid session exists for the user."""
@@ -112,36 +121,58 @@ class SessionService:
     def _save_session(self, user_id: str, session_id: str) -> None:
         """Save session with timestamp."""
         timestamp = datetime.now(timezone.utc).isoformat()
-        self.firestore_store.save_session(
-            user_id=user_id,
-            session_id=session_id,
-            timestamp=timestamp,
-        )
+        try:
+            self.firestore_store.save_session(
+                user_id=user_id,
+                session_id=session_id,
+                timestamp=timestamp,
+            )
+        except Exception as e:
+            # If Firestore fails at runtime, fall back to in-memory
+            if not isinstance(self.firestore_store, InMemorySessionStore):
+                self.logger.warning(
+                    f"Firestore save_session failed, falling back to in-memory: {str(e)}"
+                )
+                self.firestore_store = InMemorySessionStore({})
+                self.firestore_store.save_session(
+                    user_id=user_id,
+                    session_id=session_id,
+                    timestamp=timestamp,
+                )
 
     def _is_session_valid(self, user_id: str) -> bool:
         """Check if session is still valid (not expired)."""
-        data = getattr(self.firestore_store, "get_session_data", None)
-        if callable(data):
-            payload = data(user_id=user_id)
-        else:
-            doc = self.firestore_store.client.collection(
-                settings.firestore_collection
-            ).document(user_id).get()
-            if not doc.exists:
-                return False
-            payload = doc.to_dict()
-
-        if not payload:
-            return False
-
-        timestamp_str = payload.get("timestamp")
-        if not timestamp_str:
-            return False
-
         try:
-            timestamp = datetime.fromisoformat(timestamp_str)
-            now = datetime.now(timezone.utc)
-            expiration = timestamp + timedelta(hours=self.session_timeout_hours)
-            return now < expiration
-        except (ValueError, TypeError):
+            data = getattr(self.firestore_store, "get_session_data", None)
+            if callable(data):
+                payload = data(user_id=user_id)
+            else:
+                doc = self.firestore_store.client.collection(
+                    settings.firestore_collection
+                ).document(user_id).get()
+                if not doc.exists:
+                    return False
+                payload = doc.to_dict()
+
+            if not payload:
+                return False
+
+            timestamp_str = payload.get("timestamp")
+            if not timestamp_str:
+                return False
+
+            try:
+                timestamp = datetime.fromisoformat(timestamp_str)
+                now = datetime.now(timezone.utc)
+                expiration = timestamp + timedelta(hours=self.session_timeout_hours)
+                return now < expiration
+            except (ValueError, TypeError):
+                return False
+        except Exception as e:
+            # If Firestore fails at runtime, fall back to in-memory
+            if not isinstance(self.firestore_store, InMemorySessionStore):
+                self.logger.warning(
+                    f"Firestore _is_session_valid failed, falling back to in-memory: {str(e)}"
+                )
+                self.firestore_store = InMemorySessionStore({})
             return False
