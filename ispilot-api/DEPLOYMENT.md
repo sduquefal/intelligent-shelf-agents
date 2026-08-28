@@ -1,5 +1,7 @@
 # IsPilot API Deployment Guide
 
+> **📋 See Also:** [Deployment Summary (Aug 28, 2026)](../DEPLOYMENT_SUMMARY_2026-08-28.md) for detailed changelog, all fixes applied, and current status.
+
 This guide provides step-by-step instructions for deploying the IsPilot API to Google Cloud Run.
 
 ## Prerequisites

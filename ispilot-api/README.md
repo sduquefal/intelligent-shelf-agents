@@ -60,7 +60,23 @@ See `.env.example` for all available configuration options:
 
 ## Authentication
 
-All endpoints (except `/health`) require the `X-API-Key` header:
+All endpoints (except `/health`) require authentication via one of:
+
+### Option 1: OAuth Bearer Token (Recommended for Cloud Run)
+
+```bash
+AUTH_TOKEN=$(gcloud auth print-identity-token --audiences https://ispilot-api-46y2f3tyja-uc.a.run.app)
+
+curl -X POST https://ispilot-api-46y2f3tyja-uc.a.run.app/chat \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $AUTH_TOKEN" \
+  -d '{
+    "user_id": "sebastian",
+    "message": "How is Talca Colin performing?"
+  }'
+```
+
+### Option 2: API Key Header (Local development)
 
 ```bash
 curl -X POST http://localhost:8080/chat \
@@ -72,7 +88,7 @@ curl -X POST http://localhost:8080/chat \
   }'
 ```
 
-Optional headers:
+Optional headers (both methods):
 - `X-User-ID`: Explicitly set user ID (otherwise extracted from request body)
 - `X-Request-ID`: Custom request ID (auto-generated if not provided)
 
@@ -84,6 +100,21 @@ Sessions are automatically managed per user:
 2. **Session reuse**: Existing valid sessions are reused across requests
 3. **Session expiration**: Sessions expire after `SESSION_TIMEOUT_HOURS` (default: 8 hours)
 4. **Explicit session ID**: You can provide a `session_id` in the request to use a specific session
+
+### Storage Backends
+
+Sessions are stored using one of:
+
+- **Primary (Recommended)**: Cloud Firestore for persistent, distributed storage
+  - Enable with: `gcloud services enable firestore.googleapis.com --project corp-stro-salesinventory-prod`
+  - Persists sessions across service restarts
+  - Enables multi-instance deployments
+
+- **Fallback (Auto-used if Firestore unavailable)**: In-memory session store
+  - Works immediately without enabling Firestore API
+  - Sessions only persist during service runtime
+  - Sufficient for development and testing
+  - Automatically detected and used if Firestore initialization fails
 
 Example with explicit session:
 
