@@ -98,7 +98,7 @@ echo ""
 
 # Health check
 echo -e "${YELLOW}Checking service health...${NC}"
-sleep 5  # Give service time to start
+sleep 15  # Give service more time to start
 
 if curl -s "${SERVICE_URL}/health" | grep -q "healthy"; then
     echo -e "${GREEN}✓ Health check passed${NC}"
