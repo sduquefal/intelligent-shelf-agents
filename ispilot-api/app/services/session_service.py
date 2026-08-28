@@ -45,11 +45,21 @@ class SessionService:
     ) -> None:
         if store is not None:
             self.firestore_store = InMemorySessionStore(store)
+        elif firestore_store is not None:
+            self.firestore_store = firestore_store
         else:
-            self.firestore_store = firestore_store or FirestoreSessionStore(
-                project_id=settings.project_id,
-                collection_name=settings.firestore_collection,
-            )
+            # Try to use Firestore, fall back to in-memory if API is disabled
+            try:
+                self.firestore_store = FirestoreSessionStore(
+                    project_id=settings.project_id,
+                    collection_name=settings.firestore_collection,
+                )
+            except Exception as e:
+                self.logger = logging.getLogger(__name__)
+                self.logger.warning(
+                    f"Firestore initialization failed, using in-memory store: {str(e)}"
+                )
+                self.firestore_store = InMemorySessionStore({})
         self.vertex_client = vertex_client or VertexAgentClient()
         self.session_timeout_hours = session_timeout_hours
         self.logger = logging.getLogger(__name__)
