@@ -3,9 +3,34 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 
-from app.db.firestore_client import FirestoreSessionStore
 from app.config.settings import settings
+from app.db.firestore_client import FirestoreSessionStore
 from app.services.vertex_client import VertexAgentClient
+
+
+class InMemorySessionStore:
+    """Simple in-memory store used for tests and local fallbacks."""
+
+    def __init__(self, store: dict[str, dict[str, str]]) -> None:
+        self.store = store
+
+    def get_session(self, user_id: str) -> str | None:
+        data = self.store.get(user_id)
+        if not data:
+            return None
+        return data.get("session_id")
+
+    def get_session_data(self, user_id: str) -> dict[str, str] | None:
+        return self.store.get(user_id)
+
+    def save_session(self, user_id: str, session_id: str, timestamp: str | None = None) -> None:
+        self.store[user_id] = {
+            "user_id": user_id,
+            "session_id": session_id,
+            "status": "active",
+        }
+        if timestamp is not None:
+            self.store[user_id]["timestamp"] = timestamp
 
 
 class SessionService:
@@ -13,14 +38,18 @@ class SessionService:
 
     def __init__(
         self,
-        firestore_store: FirestoreSessionStore | None = None,
+        firestore_store: FirestoreSessionStore | InMemorySessionStore | None = None,
         vertex_client: VertexAgentClient | None = None,
         session_timeout_hours: int = 8,
+        store: dict[str, dict[str, str]] | None = None,
     ) -> None:
-        self.firestore_store = firestore_store or FirestoreSessionStore(
-            project_id=settings.project_id,
-            collection_name=settings.firestore_collection,
-        )
+        if store is not None:
+            self.firestore_store = InMemorySessionStore(store)
+        else:
+            self.firestore_store = firestore_store or FirestoreSessionStore(
+                project_id=settings.project_id,
+                collection_name=settings.firestore_collection,
+            )
         self.vertex_client = vertex_client or VertexAgentClient()
         self.session_timeout_hours = session_timeout_hours
         self.logger = logging.getLogger(__name__)
@@ -44,23 +73,30 @@ class SessionService:
         if session_id:
             if self._is_session_valid(user_id=user_id):
                 return session_id
-            else:
-                self.logger.info(
-                    f"Session expired for user {user_id}",
-                    extra={"user_id": user_id},
-                )
-                return None
+            self.logger.info(
+                f"Session expired for user {user_id}",
+                extra={"user_id": user_id},
+            )
+            return None
         return None
 
     def exists(self, user_id: str) -> bool:
         """Check if a valid session exists for the user."""
         return self.get(user_id=user_id) is not None
 
-    def get_or_create(self, user_id: str) -> str:
+    def get_current(self, user_id: str) -> str | None:
+        """Return the active session id for a user, if any."""
+        return self.get(user_id=user_id)
+
+    def get_or_create(self, user_id: str, session_id: str | None = None) -> str:
         """Get existing session or create a new one."""
-        session_id = self.get(user_id=user_id)
-        if session_id:
+        if session_id is not None:
+            self._save_session(user_id=user_id, session_id=session_id)
             return session_id
+
+        existing_session = self.get(user_id=user_id)
+        if existing_session:
+            return existing_session
         return self.create(user_id=user_id)
 
     def _save_session(self, user_id: str, session_id: str) -> None:
@@ -74,15 +110,21 @@ class SessionService:
 
     def _is_session_valid(self, user_id: str) -> bool:
         """Check if session is still valid (not expired)."""
-        doc = self.firestore_store.client.collection(
-            settings.firestore_collection
-        ).document(user_id).get()
-        
-        if not doc.exists:
+        data = getattr(self.firestore_store, "get_session_data", None)
+        if callable(data):
+            payload = data(user_id=user_id)
+        else:
+            doc = self.firestore_store.client.collection(
+                settings.firestore_collection
+            ).document(user_id).get()
+            if not doc.exists:
+                return False
+            payload = doc.to_dict()
+
+        if not payload:
             return False
 
-        data = doc.to_dict()
-        timestamp_str = data.get("timestamp")
+        timestamp_str = payload.get("timestamp")
         if not timestamp_str:
             return False
 

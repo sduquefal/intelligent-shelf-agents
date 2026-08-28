@@ -1,21 +1,14 @@
 """Pytest configuration and fixtures for IsPilot API tests."""
 
+import importlib
 import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
 
-
-@pytest.fixture
-def client():
-    """FastAPI test client."""
-    return TestClient(app)
-
-
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def mock_env_vars(monkeypatch):
     """Mock environment variables for testing."""
     test_env = {
@@ -31,6 +24,17 @@ def mock_env_vars(monkeypatch):
     for key, value in test_env.items():
         monkeypatch.setenv(key, value)
     return test_env
+
+
+@pytest.fixture
+def client():
+    """FastAPI test client."""
+    import app.main
+    import app.api.chat
+    importlib.reload(app.api.chat)
+    importlib.reload(app.main)
+    from app.main import app
+    return TestClient(app)
 
 
 @pytest.fixture

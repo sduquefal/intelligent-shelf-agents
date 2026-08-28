@@ -14,6 +14,12 @@ class FirestoreSessionStore:
             return None
         return doc.to_dict().get("session_id")
 
+    def get_session_data(self, user_id: str) -> dict[str, str] | None:
+        doc = self.client.collection(self.collection_name).document(user_id).get()
+        if not doc.exists:
+            return None
+        return doc.to_dict()
+
     def save_session(self, user_id: str, session_id: str, timestamp: str | None = None) -> None:
         """Save session with optional timestamp."""
         data = {
@@ -23,6 +29,6 @@ class FirestoreSessionStore:
         }
         if timestamp:
             data["timestamp"] = timestamp
-        
+
         doc_ref = self.client.collection(self.collection_name).document(user_id)
         doc_ref.set(data)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Awaitable, Callable
 
 from fastapi import Request, Response
@@ -21,6 +22,9 @@ class APIKeyValidationMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         """Validate API key and extract user_id."""
+        # Refresh from runtime environment so app startup does not lock in stale config values.
+        self.api_key = self.api_key or os.getenv("ISPILOT_API_KEY")
+
         # Skip auth for health endpoint
         if request.url.path == "/health":
             return await call_next(request)
@@ -42,8 +46,23 @@ class APIKeyValidationMiddleware(BaseHTTPMiddleware):
                 media_type="application/json",
             )
 
+        if not self.api_key:
+            self.logger.error(
+                "API server misconfiguration: missing ISPILOT_API_KEY",
+                extra={
+                    "method": request.method,
+                    "path": request.url.path,
+                    "client": request.client.host if request.client else "unknown",
+                },
+            )
+            return Response(
+                content='{"error_code": "SERVER_CONFIG_ERROR", "error_message": "API key is not configured on the server"}',
+                status_code=500,
+                media_type="application/json",
+            )
+
         # Validate API key
-        if self.api_key and api_key != self.api_key:
+        if api_key != self.api_key:
             self.logger.warning(
                 "Unauthorized request: invalid API key",
                 extra={

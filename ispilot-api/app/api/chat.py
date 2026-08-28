@@ -9,10 +9,12 @@ from pydantic import BaseModel
 from app.config.settings import settings
 from app.models.responses import ChatResponse, ErrorResponse
 from app.services.session_service import SessionService
+from app.services.vertex_client import VertexAgentClient
 from app.utils.logging import get_request_id
 
 router = APIRouter(prefix="", tags=["chat"])
 session_service = SessionService(session_timeout_hours=settings.session_timeout_hours)
+vertex_client = VertexAgentClient()
 logger = logging.getLogger(__name__)
 
 
@@ -48,10 +50,13 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse:
         )
         
         # Use existing session or create new one
-        effective_session = session_service.get_or_create(user_id=user_id)
-        
+        effective_session = session_service.get_or_create(
+            user_id=user_id,
+            session_id=session_id,
+        )
+
         # Execute chat via Vertex
-        answer, confirmed_session = session_service.vertex_client.chat(
+        answer, confirmed_session = vertex_client.chat(
             user_id=user_id,
             message=request.message,
             session_id=effective_session,
