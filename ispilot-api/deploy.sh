@@ -11,11 +11,11 @@ NC='\033[0m' # No Color
 PROJECT_ID="${PROJECT_ID:-corp-stro-salesinventory-prod}"
 REGION="${REGION:-us-central1}"
 SERVICE_NAME="${SERVICE_NAME:-ispilot-api}"
-SERVICE_ACCOUNT="${SERVICE_ACCOUNT:-sa-ispilot-api@${PROJECT_ID}.iam.gserviceaccount.com}"
+SERVICE_ACCOUNT="${SERVICE_ACCOUNT:-sa-tot-osa@${PROJECT_ID}.iam.gserviceaccount.com}"
 
-# Set service account credentials
-SA_KEY_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/sa/key.json"
-export GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-$SA_KEY_PATH}"
+# Set service account credentials (sa-tot-osa key for authentication)
+SA_KEY_PATH="${GOOGLE_APPLICATION_CREDENTIALS:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/sa/key.json}"
+export GOOGLE_APPLICATION_CREDENTIALS="$SA_KEY_PATH"
 REPOSITORY="${REPOSITORY:-ispilot-api}"
 IMAGE_NAME="${SERVICE_NAME}:latest"
 ARTIFACT_REGISTRY="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}"
@@ -70,7 +70,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --image "$IMAGE" \
   --platform managed \
   --no-allow-unauthenticated \
-  --service-account "$SERVICE_ACCOUNT" \
+  --service-account sa-tot-osa@${PROJECT_ID}.iam.gserviceaccount.com \
   --memory 1Gi \
   --cpu 2 \
   --concurrency 100 \
