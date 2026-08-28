@@ -28,12 +28,20 @@ class VertexAgentClient:
 
     def _token(self) -> str:
         """Get valid Google Cloud authentication token."""
-        credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-        if not credentials_path:
+        credentials_input = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        if not credentials_input:
             raise ValueError("GOOGLE_APPLICATION_CREDENTIALS is not configured for Vertex access")
         
         try:
-            credentials = service_account.Credentials.from_service_account_file(credentials_path)
+            # Handle both file path and JSON string (from Cloud Run --set-secrets)
+            if credentials_input.startswith("{"):
+                # JSON string from environment variable
+                creds_dict = json.loads(credentials_input)
+                credentials = service_account.Credentials.from_service_account_info(creds_dict)
+            else:
+                # File path
+                credentials = service_account.Credentials.from_service_account_file(credentials_input)
+            
             if hasattr(credentials, "token"):
                 credentials.refresh(None)
                 return credentials.token
@@ -41,7 +49,7 @@ class VertexAgentClient:
         except Exception as exc:
             logger.error(
                 "Authentication failed",
-                extra={"error": str(exc), "credentials_path": credentials_path},
+                extra={"error": str(exc), "credentials_input": credentials_input[:50] if credentials_input else None},
             )
             raise ValueError(f"Failed to authenticate with Vertex: {exc}") from exc
 
