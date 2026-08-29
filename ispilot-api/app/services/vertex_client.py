@@ -150,15 +150,20 @@ class VertexAgentClient:
     def _extract_text(self, payload: dict[str, Any]) -> str:
         output = payload.get("output", [])
         if not isinstance(output, list):
-            return json.dumps(payload)
+            logger.error("Vertex response missing list output", extra={"payload": payload})
+            raise ValueError(f"Vertex response had no usable text output: {payload}")
 
         for item in output:
             content = item.get("content", {})
             parts = content.get("parts", [])
             for part in parts:
                 if "text" in part:
-                    return part["text"]
-        return json.dumps(payload)
+                    text = part["text"]
+                    if text and str(text).strip():
+                        return text
+
+        logger.error("Vertex response was empty or contained no text", extra={"payload": payload})
+        raise ValueError(f"Vertex returned empty output or no usable text: {payload}")
 
     def chat(self, user_id: str, message: str, session_id: str | None = None) -> tuple[str, str]:
         """Execute chat query with end-to-end latency tracking."""

@@ -2,6 +2,14 @@ import pytest
 
 from app.services.auth_service import AuthService
 from app.services.session_service import SessionService
+from app.services.vertex_client import VertexAgentClient
+
+
+def test_vertex_empty_output_raises_value_error():
+    client = VertexAgentClient()
+
+    with pytest.raises(ValueError, match="no usable text output|empty output"):
+        client._extract_text({"output": []})
 
 
 def test_auth_service_rejects_invalid_key(monkeypatch):
