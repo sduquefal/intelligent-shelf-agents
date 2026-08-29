@@ -161,7 +161,38 @@ class VertexAgentClient:
         return json.dumps(payload)
 
     def chat(self, user_id: str, message: str, session_id: str | None = None) -> tuple[str, str]:
-        effective_session = session_id or self.create_session(user_id)
-        result = self.stream_query(user_id=user_id, session_id=effective_session, message=message)
-        answer = self._extract_text(result)
-        return answer, effective_session
+        """Execute chat query with end-to-end latency tracking."""
+        start_time = time.time()
+        operation_name = f"chat(user_id={user_id})"
+        
+        try:
+            effective_session = session_id or self.create_session(user_id)
+            result = self.stream_query(user_id=user_id, session_id=effective_session, message=message)
+            answer = self._extract_text(result)
+            
+            latency_ms = (time.time() - start_time) * 1000
+            logger.info(
+                f"[VERTEX_METRICS] {operation_name} completed",
+                extra={
+                    "operation": operation_name,
+                    "latency_ms": round(latency_ms, 2),
+                    "status": "success",
+                    "session_id": effective_session,
+                }
+            )
+            print(f"✓ [VERTEX] {operation_name} completed in {latency_ms:.2f}ms")
+            
+            return answer, effective_session
+        except Exception as e:
+            latency_ms = (time.time() - start_time) * 1000
+            logger.error(
+                f"[VERTEX_METRICS] {operation_name} failed",
+                extra={
+                    "operation": operation_name,
+                    "latency_ms": round(latency_ms, 2),
+                    "error": str(e),
+                    "status": "error",
+                }
+            )
+            print(f"✗ [VERTEX] {operation_name} failed after {latency_ms:.2f}ms: {e}")
+            raise

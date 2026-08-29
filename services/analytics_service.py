@@ -1,6 +1,10 @@
+import time
+import logging
+
 from domain.summary import DailySummary, MetricSummary
 from gateways.nsg_gateway import NSGGateway
 
+logger = logging.getLogger(__name__)
 
 SUPPORTED_COUNTRIES = {"CL", "PE"}
 
@@ -29,68 +33,97 @@ class AnalyticsService:
         self,
         country: str,
     ) -> dict:
-        country = country.upper().strip()
+        start_time = time.time()
+        operation_name = f"get_latest_daily_summary({country})"
+        
+        try:
+            country = country.upper().strip()
 
-        if country not in SUPPORTED_COUNTRIES:
+            if country not in SUPPORTED_COUNTRIES:
+                return {
+                    "status": "error",
+                    "message": "Supported countries are CL and PE.",
+                }
+
+            row = self._nsg_gateway.get_latest_daily_summary(
+                country
+            )
+
+            if row is None:
+                return {
+                    "status": "not_found",
+                    "country": country,
+                    "message": (
+                        "No daily Intelligent Shelf data was found."
+                    ),
+                }
+
+            on_shelf = int(row["n_on_shelf"] or 0)
+            oos_shelf = int(row["n_oos_shelf"] or 0)
+            oos_store = int(row["n_oos_store"] or 0)
+
+            total = (
+                on_shelf
+                + oos_shelf
+                + oos_store
+            )
+
+            summary = DailySummary(
+                country=country,
+                date=row["alert_date"],
+                total=total,
+                en_gondola=MetricSummary(
+                    count=on_shelf,
+                    percentage=self._percentage(
+                        on_shelf,
+                        total,
+                    ),
+                ),
+                bodega=MetricSummary(
+                    count=oos_shelf,
+                    percentage=self._percentage(
+                        oos_shelf,
+                        total,
+                    ),
+                ),
+                quiebre=MetricSummary(
+                    count=oos_store,
+                    percentage=self._percentage(
+                        oos_store,
+                        total,
+                    ),
+                ),
+            )
+
+            latency_ms = (time.time() - start_time) * 1000
+            logger.info(
+                f"[ANALYTICS_METRICS] {operation_name} completed successfully",
+                extra={
+                    "operation": operation_name,
+                    "latency_ms": round(latency_ms, 2),
+                    "country": country,
+                    "status": "success",
+                }
+            )
+            print(f"✓ [ANALYTICS] {operation_name} took {latency_ms:.2f}ms")
+
             return {
-                "status": "error",
-                "message": "Supported countries are CL and PE.",
+                "status": "success",
+                "summary": summary.to_dict(),
             }
-
-        row = self._nsg_gateway.get_latest_daily_summary(
-            country
-        )
-
-        if row is None:
-            return {
-                "status": "not_found",
-                "country": country,
-                "message": (
-                    "No daily Intelligent Shelf data was found."
-                ),
-            }
-
-        on_shelf = int(row["n_on_shelf"] or 0)
-        oos_shelf = int(row["n_oos_shelf"] or 0)
-        oos_store = int(row["n_oos_store"] or 0)
-
-        total = (
-            on_shelf
-            + oos_shelf
-            + oos_store
-        )
-
-        summary = DailySummary(
-            country=country,
-            date=row["alert_date"],
-            total=total,
-            en_gondola=MetricSummary(
-                count=on_shelf,
-                percentage=self._percentage(
-                    on_shelf,
-                    total,
-                ),
-            ),
-            bodega=MetricSummary(
-                count=oos_shelf,
-                percentage=self._percentage(
-                    oos_shelf,
-                    total,
-                ),
-            ),
-            quiebre=MetricSummary(
-                count=oos_store,
-                percentage=self._percentage(
-                    oos_store,
-                    total,
-                ),
-            ),
-        )
-
-        return {
-            "status": "success",
-            "summary": summary.to_dict(),
-        }
+        except Exception as e:
+            latency_ms = (time.time() - start_time) * 1000
+            logger.error(
+                f"[ANALYTICS_METRICS] {operation_name} failed",
+                extra={
+                    "operation": operation_name,
+                    "latency_ms": round(latency_ms, 2),
+                    "error": str(e),
+                    "status": "error",
+                }
+            )
+            print(f"✗ [ANALYTICS] {operation_name} failed after {latency_ms:.2f}ms: {e}")
+            raise
     
     def get_store_summary(
         self,
