@@ -130,7 +130,46 @@ ISPilot Multi-Agent Platform
 
 ---
 
-## Integration: Root → API Flow
+### Sprint 3: Staging Validation & Metrics Integration (IN PROGRESS)
+
+**Status**: Phase 2 Complete ✅ | Phase 4 Starting 🔄  
+**Start Date**: 2026-08-29 | **Current Timeline**: Week 1 of 3-4
+
+#### Phase 1: Local SA Setup ❌
+- **Attempted**: SA credential setup for local testing  
+- **Result**: SA key file not available locally
+- **Decision**: Skip local testing, proceed to remote (Plan B)
+- **Time**: 15 min
+
+#### Phase 2: Metrics Integration ✅ COMPLETE  
+**Code Changes**:
+- ✅ `agents/coordinator/agent.py` - Added `track_agent_operation()` context manager
+- ✅ `services/analytics_service.py` - Added latency + error tracking to `get_latest_daily_summary()`  
+- ✅ `services/store_service.py` - Added latency + error tracking to `resolve_store()`
+- ✅ `ispilot-api/app/services/vertex_client.py` - Added end-to-end latency tracking to `chat()`
+
+**Metrics Format**:
+- Console: `✓ [SERVICE] operation_name took {latency_ms}ms`
+- Structured Logs: operation, latency_ms, status, error (if any)
+
+**Commit**: fe106ea | **Time**: 45 min | **Files**: 8
+
+#### Phase 3: Local Testing ❌ BLOCKED
+- **Created**: `test_local_integration.py` (imports, auth, analytics tests)
+- **Result**: Missing google.adk module + no SA credentials locally  
+- **Decision**: Execute test on remote machine (has dependencies)
+- **Time**: 20 min
+
+#### Phase 4: Remote Testing (STARTING THIS WEEK)
+**Blockers**: As expected, resolving via remote machine  
+**Next Steps**:
+1. ✓ Code pushed to GitHub (fe106ea)
+2. ⏳ Clone + run tests on remote
+3. ⏳ Verify metrics logging works  
+4. ⏳ Deploy to staging
+5. ⏳ Validate API endpoints
+
+---
 
 ### User Request Journey
 
