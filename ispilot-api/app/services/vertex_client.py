@@ -30,7 +30,7 @@ class VertexAgentClient:
         """Get valid Google Cloud authentication token using Application Default Credentials."""
         try:
             # Application Default Credentials automatically handles:
-            # - Workload Identity in Cloud Run
+            # - Workload Identity in Cloud Run (no credentials needed)
             # - Service account key files in local dev
             # - gcloud authentication
             credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])

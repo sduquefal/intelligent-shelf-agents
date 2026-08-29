@@ -12,9 +12,8 @@ REGION="${REGION:-us-central1}"
 SERVICE_NAME="${SERVICE_NAME:-ispilot-api}"
 SERVICE_ACCOUNT="${SERVICE_ACCOUNT:-sa-tot-osa@${PROJECT_ID}.iam.gserviceaccount.com}"
 
-# Set service account credentials (sa-tot-osa key for authentication)
+# Set service account credentials for local gcloud authentication (not exported to Docker)
 SA_KEY_PATH="${GOOGLE_APPLICATION_CREDENTIALS:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/sa/key.json}"
-export GOOGLE_APPLICATION_CREDENTIALS="$SA_KEY_PATH"
 REPOSITORY="${REPOSITORY:-ispilot-api}"
 IMAGE_NAME="${SERVICE_NAME}:latest"
 ARTIFACT_REGISTRY="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}"
@@ -30,17 +29,17 @@ echo ""
 
 # Verify gcloud is authenticated
 echo -e "${YELLOW}Verifying gcloud authentication...${NC}"
-if [ ! -f "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
-    echo -e "${RED}Error: Service account key not found at $GOOGLE_APPLICATION_CREDENTIALS${NC}"
+if [ ! -f "$SA_KEY_PATH" ]; then
+    echo -e "${RED}Error: Service account key not found at $SA_KEY_PATH${NC}"
     echo "Please ensure the key file exists or set GOOGLE_APPLICATION_CREDENTIALS environment variable"
     exit 1
 fi
 
 if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q .; then
     echo -e "${YELLOW}Authenticating with service account key...${NC}"
-    gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
+    gcloud auth activate-service-account --key-file="$SA_KEY_PATH"
 fi
-echo -e "${GREEN}✓ Authenticated (GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS)${NC}"
+echo -e "${GREEN}✓ Authenticated${NC}"
 echo ""
 
 # Build Docker image
