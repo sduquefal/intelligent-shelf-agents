@@ -251,7 +251,7 @@ For implementation details, see:
 - [Permissions & IAM](docs/PERMISSIONS_AND_IAM.md) - Service account setup and roles
 - [Session Service & Firestore](docs/SESSION_SERVICE_FIRESTORE_FALLBACK.md) - Session management and fallback
 - [Authentication Mechanism](docs/AUTHENTICATION_CHANGES.md) - Auth evolution and implementation
-- [Sprint Tracking](SPRINT2_COMPLETION.md) - Checkpoint for resuming work
+- [Work Checkpoint](WORK_CHECKPOINT.md) - Track completed work across all sprints
 
 See [Cloud Build Configuration](#cloud-build-configuration) below for details.
 
