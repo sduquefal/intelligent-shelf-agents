@@ -1,72 +1,79 @@
 # IsPilot API
 
-This service exposes IsPilot through a simple REST interface for enterprise channels such as Copilot Studio and Teams.
+This service exposes IsPilot through a REST API for enterprise channels such as Copilot Studio, Microsoft Teams, and custom applications.
 
-## Local development
+**Production Status**: ✅ Live at https://ispilot-api-46y2f3tyja-uc.a.run.app
 
-### Quick start (using shared service account)
+## Architecture
 
-```bash
-./run.sh
+The API communicates with Google Vertex AI Reasoning Engine (ID: 5375474415045705728) to orchestrate multi-agent conversations. Sessions are managed through Cloud Firestore with automatic fallback to in-memory storage.
+
+```
+Client Request
+    ↓
+  Cloud Run (Workload Identity)
+    ↓
+  FastAPI Application
+    ↓
+  Vertex AI Reasoning Engine
+    ↓
+  Agent Orchestration
+    ↓
+  BigQuery Analytics
 ```
 
-This will automatically use the shared service account key at `../../sa/key.json` and set up the environment.
+## Quick Start: Local Development
 
-### Manual setup
+### Setup
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-# The shared service account key is at ../../sa/key.json
-# It's automatically detected by run.sh and deploy.sh
-# Or set it manually:
-export GOOGLE_APPLICATION_CREDENTIALS="../../../sa/key.json"
+# Set environment variables
 export GOOGLE_CLOUD_PROJECT="corp-stro-salesinventory-prod"
 export GOOGLE_CLOUD_LOCATION="us-central1"
 export VERTEX_PROJECT_ID="corp-stro-salesinventory-prod"
 export VERTEX_LOCATION="us-central1"
 export VERTEX_ENGINE_ID="5375474415045705728"
+export FIRESTORE_COLLECTION="user_sessions"
+export SESSION_TIMEOUT_HOURS="8"
+
+# For local testing with API key
 export ISPILOT_API_KEY="your-test-api-key"
+
+# Run the server
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
 ```
 
-## Service Account
+**Note**: Application Default Credentials (ADC) will automatically detect and use available credentials. In local development, ensure you're authenticated:
 
-This project uses a shared service account key located at:
+```bash
+gcloud auth application-default login
 ```
-../../sa/key.json  (relative to ispilot-api/)
+
+### Using run.sh
+
+```bash
+chmod +x run.sh
+./run.sh
 ```
-
-This key is automatically loaded by:
-- `run.sh` (local development)
-- `deploy.sh` (Cloud Run deployment)
-
-If the file is not found, you can override with `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
-
-## Environment Variables
-
-See `.env.example` for all available configuration options:
-
-- `GOOGLE_APPLICATION_CREDENTIALS`: Path to GCP service account JSON
-- `GOOGLE_CLOUD_PROJECT`: GCP project ID
-- `GOOGLE_CLOUD_LOCATION`: GCP region
-- `VERTEX_PROJECT_ID`: Vertex AI project ID
-- `VERTEX_LOCATION`: Vertex AI location
-- `VERTEX_ENGINE_ID`: Reasoning Engine ID
-- `ISPILOT_API_KEY`: API key for authentication
-- `SESSION_TIMEOUT_HOURS`: Session expiration timeout (default: 8)
 
 ## Authentication
 
-All endpoints (except `/health`) require authentication via one of:
+### Cloud Run (Production)
 
-### Option 1: OAuth Bearer Token (Recommended for Cloud Run)
+Uses **Workload Identity** - no credential files required. The service account (`sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com`) is automatically bound to the Cloud Run service.
+
+**Client Authentication** (calling the API):
 
 ```bash
-AUTH_TOKEN=$(gcloud auth print-identity-token --audiences https://ispilot-api-46y2f3tyja-uc.a.run.app)
+# Get an identity token
+AUTH_TOKEN=$(gcloud auth print-identity-token \
+  --audiences https://ispilot-api-46y2f3tyja-uc.a.run.app)
 
+# Use the token in requests
 curl -X POST https://ispilot-api-46y2f3tyja-uc.a.run.app/chat \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $AUTH_TOKEN" \
@@ -76,189 +83,172 @@ curl -X POST https://ispilot-api-46y2f3tyja-uc.a.run.app/chat \
   }'
 ```
 
-### Option 2: API Key Header (Local development)
+### Local Development
+
+Use API Key authentication for testing:
 
 ```bash
 curl -X POST http://localhost:8080/chat \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
+  -H "X-API-Key: your-test-api-key" \
   -d '{
     "user_id": "sebastian",
     "message": "How is Talca Colin performing?"
   }'
 ```
 
-Optional headers (both methods):
-- `X-User-ID`: Explicitly set user ID (otherwise extracted from request body)
-- `X-Request-ID`: Custom request ID (auto-generated if not provided)
+## Environment Variables
 
-## Session Handling
+| Variable | Required | Description | Default |
+|----------|----------|-------------|----------|
+| `GOOGLE_CLOUD_PROJECT` | ✅ | GCP project ID | `corp-stro-salesinventory-prod` |
+| `GOOGLE_CLOUD_LOCATION` | ✅ | GCP region | `us-central1` |
+| `VERTEX_PROJECT_ID` | ✅ | Vertex AI project ID | Same as GOOGLE_CLOUD_PROJECT |
+| `VERTEX_LOCATION` | ✅ | Vertex AI location | `us-central1` |
+| `VERTEX_ENGINE_ID` | ✅ | Reasoning Engine ID | `5375474415045705728` |
+| `FIRESTORE_COLLECTION` | | Firestore collection for sessions | `user_sessions` |
+| `SESSION_TIMEOUT_HOURS` | | Session expiration (hours) | `8` |
+| `ISPILOT_API_KEY` | | API key for local testing | (none) |
 
-Sessions are automatically managed per user:
+## Endpoints
 
-1. **Automatic session creation**: If user doesn't have an active session, one is created on first request
-2. **Session reuse**: Existing valid sessions are reused across requests
-3. **Session expiration**: Sessions expire after `SESSION_TIMEOUT_HOURS` (default: 8 hours)
-4. **Explicit session ID**: You can provide a `session_id` in the request to use a specific session
+### GET /health
 
-### Storage Backends
+Health check endpoint (no authentication required).
 
-Sessions are stored using one of:
-
-- **Primary (Recommended)**: Cloud Firestore for persistent, distributed storage
-  - Enable with: `gcloud services enable firestore.googleapis.com --project corp-stro-salesinventory-prod`
-  - Persists sessions across service restarts
-  - Enables multi-instance deployments
-
-- **Fallback (Auto-used if Firestore unavailable)**: In-memory session store
-  - Works immediately without enabling Firestore API
-  - Sessions only persist during service runtime
-  - Sufficient for development and testing
-  - Automatically detected and used if Firestore initialization fails
-
-Example with explicit session:
-
-```bash
-curl -X POST http://localhost:8080/chat \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
-  -d '{
-    "user_id": "sebastian",
-    "message": "Continue from previous context",
-    "session_id": "existing-session-id"
-  }'
-```
-
-## Health
-
-```bash
-curl http://localhost:8080/health
-```
-
-Response:
-
+**Response**:
 ```json
 {
   "status": "healthy",
-  "timestamp": "2026-08-27T10:30:45.123456"
+  "timestamp": "2026-08-28T10:30:45.123456"
 }
 ```
 
-## Chat
+### POST /chat
 
-Default session behavior with automatic creation:
+Chat with IsPilot agents.
 
-```bash
-curl -X POST http://localhost:8080/chat \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
-  -d '{
-    "user_id": "sebastian",
-    "message": "How is Talca Colin performing?"
-  }'
+**Request**:
+```json
+{
+  "user_id": "sebastian",
+  "message": "How is Talca Colin performing?",
+  "session_id": "optional-session-uuid"
+}
 ```
 
-### Response Contract
-
-All chat responses include:
-
+**Response**:
 ```json
 {
   "answer": "Response from IsPilot...",
   "session_id": "session-uuid",
   "request_id": "request-uuid",
-  "timestamp": "2026-08-27T10:30:45.123456",
+  "timestamp": "2026-08-28T10:30:45.123456",
   "status": "ok"
 }
 ```
 
-### Error Response Contract
-
-Error responses follow this format:
-
+**Error Response**:
 ```json
 {
-  "error_code": "ERROR_CODE",
-  "error_message": "Human-readable error message",
+  "error_code": "INVALID_API_KEY",
+  "error_message": "Authentication failed",
   "request_id": "request-uuid"
 }
 ```
 
-Common error codes:
-- `MISSING_API_KEY`: X-API-Key header not provided
-- `INVALID_API_KEY`: X-API-Key value is invalid
-- `VALIDATION_ERROR`: Request validation failed
-- `INTERNAL_ERROR`: Server-side error
+## Session Management
 
-## Deployment to Cloud Run
+### Automatic Session Handling
 
-### Automated Deployment Script
+1. First request creates a session automatically
+2. Subsequent requests reuse the session if valid
+3. Sessions expire after `SESSION_TIMEOUT_HOURS` (default: 8 hours)
+4. Session data persists in Firestore (production) or in-memory (development)
+
+### Explicit Session Control
+
+```bash
+# Reuse a specific session
+curl -X POST http://localhost:8080/chat \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "user_id": "sebastian",
+    "message": "Continue from previous context",
+    "session_id": "8324292617089056768"
+  }'
+```
+
+### Session Storage
+
+**Production (Cloud Run)**:
+- Primary: Cloud Firestore (`user_sessions` collection)
+- Fallback: In-memory (if Firestore unavailable)
+- Persists across service restarts
+- Enables multi-instance deployments
+
+**Development (Local)**:
+- In-memory session store
+- Sessions reset on application restart
+- Sufficient for testing and development
+
+## Deployment
+
+### To Cloud Run
 
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
 ```
 
-The `deploy.sh` script handles:
-1. Building the Docker image with multi-stage optimization
-2. Pushing to Artifact Registry (us-central1-docker.pkg.dev)
-3. Deploying to Cloud Run with proper resource configuration
-4. Setting environment variables and secrets
-5. Configuring service account (sa-ispilot-api)
-6. Health check verification
+The deployment script:
+1. Builds Docker image (multi-stage, optimized)
+2. Pushes to Artifact Registry
+3. Deploys to Cloud Run with Workload Identity
+4. Sets all required environment variables
+5. Configures health checks and resource limits
 
-### Manual Deployment
+**Current Production Deployment**:
+- URL: `https://ispilot-api-46y2f3tyja-uc.a.run.app`
+- Service Account: `sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com`
+- Region: `us-central1`
+- Status: ✅ Active
 
-If you need to deploy manually:
+### Authentication in Cloud Run
 
-```bash
-# 1. Set configuration
-export PROJECT_ID="corp-stro-salesinventory-prod"
-export REGION="us-central1"
-export SERVICE_NAME="ispilot-api"
-export REPOSITORY="ispilot-api"
+The deployment uses **Workload Identity**:
 
-# 2. Build image
-docker build -t us-central1-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${SERVICE_NAME}:latest .
+- No credential files stored in the container
+- Service account automatically bound to Cloud Run service
+- `google.auth.default()` automatically detects and uses Workload Identity
+- No `GOOGLE_APPLICATION_CREDENTIALS` environment variable needed
 
-# 3. Configure Docker authentication
-gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+This approach is secure and follows Google Cloud best practices.
 
-# 4. Push to Artifact Registry
-docker push us-central1-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${SERVICE_NAME}:latest
+## Troubleshooting
 
-# 5. Deploy to Cloud Run
-gcloud run deploy ${SERVICE_NAME} \
-  --project ${PROJECT_ID} \
-  --region ${REGION} \
-  --image us-central1-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${SERVICE_NAME}:latest \
-  --platform managed \
-  --no-allow-unauthenticated \
-  --service-account sa-ispilot-api@${PROJECT_ID}.iam.gserviceaccount.com \
-  --memory 1Gi \
-  --cpu 2 \
-  --concurrency 100 \
-  --timeout 300 \
-  --set-env-vars \
-    "GOOGLE_CLOUD_PROJECT=${PROJECT_ID}," \
-    "GOOGLE_CLOUD_LOCATION=${REGION}," \
-    "VERTEX_PROJECT_ID=${PROJECT_ID}," \
-    "VERTEX_LOCATION=${REGION}," \
-    "VERTEX_ENGINE_ID=5375474415045705728," \
-    "FIRESTORE_COLLECTION=user_sessions," \
-    "SESSION_TIMEOUT_HOURS=8" \
-  --update-secrets \
-    "ISPILOT_API_KEY=ispilot-api-key:latest"
-```
+### Common Issues
 
-### Cloud Build CI/CD
+**Authentication Failed**
+- Verify Bearer token is valid: `gcloud auth print-identity-token --audiences <api-url>`
+- For API Key auth: check `ISPILOT_API_KEY` environment variable
+- Ensure service account has required IAM roles
 
-The service includes a `cloudbuild.yaml` for automated CI/CD. Each push to main triggers:
+**Session Not Persisting**
+- Check Firestore is enabled: `gcloud services enable firestore.googleapis.com --project corp-stro-salesinventory-prod`
+- Service account needs `roles/datastore.user` permission
+- In-memory fallback is active if Firestore unavailable
 
-1. **Build**: Docker image build with optimized multi-stage compilation
-2. **Push**: Image pushed to Artifact Registry
-3. **Deploy**: Deployment to Cloud Run via gke-deploy
-4. **Verify**: Service verification and health check
+**Vertex AI Connection Failed**
+- Verify Engine ID is correct: `5375474415045705728`
+- Check service account has `roles/aiplatform.user` permission
+- Confirm region is `us-central1`
+
+## See Also
+
+- [Deployment Guide](DEPLOYMENT.md) - Complete setup and prerequisites
+- [Authentication Changes Documentation](docs/AUTHENTICATION_CHANGES.md) - Auth mechanism evolution
+- [Platform Overview](../docs/ISPilot-Platform-Overview.md) - Architecture and agent details
 
 See [Cloud Build Configuration](#cloud-build-configuration) below for details.
 

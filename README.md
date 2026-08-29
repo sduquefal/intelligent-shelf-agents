@@ -1,8 +1,8 @@
-# 🚧 Project Status
-
-**Active Development (MVP)**
-
 # ISPilot
+
+**Status**: ✅ API Deployed to Cloud Run (Production)
+
+**API Endpoint**: https://ispilot-api-46y2f3tyja-uc.a.run.app
 
 ISPilot is an enterprise AI platform designed to provide retail business users with natural language access to Intelligent Shelf operational data.
 
@@ -295,6 +295,53 @@ intelligent-shelf-agents/
 | En Góndola | ON_SHELF |
 | Bodega | OOS_SHELF |
 | Quiebre | OOS_STORE |
+
+---
+
+# API Integration
+
+The ISPilot agents are exposed through a REST API running on Google Cloud Run.
+
+## Production API
+
+**Endpoint**: `https://ispilot-api-46y2f3tyja-uc.a.run.app`
+
+**Authentication**: OAuth 2.0 Bearer Token (Workload Identity)
+
+**Status**: ✅ Active and responding
+
+**Deployment Details**:
+- Service Account: `sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com`
+- Region: `us-central1`
+- Memory: 1Gi
+- CPU: 2
+- Authentication: Workload Identity (no credential files)
+- Session Backend: Cloud Firestore (with in-memory fallback)
+
+## Quick API Test
+
+```bash
+# Get authentication token
+AUTH_TOKEN=$(gcloud auth print-identity-token --audiences https://ispilot-api-46y2f3tyja-uc.a.run.app)
+
+# Test the API
+curl -X POST https://ispilot-api-46y2f3tyja-uc.a.run.app/chat \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $AUTH_TOKEN" \
+  -d '{
+    "user_id": "sebastian",
+    "message": "How is Talca Colin performing?"
+  }'
+```
+
+## API Documentation
+
+See [ispilot-api/README.md](ispilot-api/README.md) for complete API documentation including:
+- All endpoints (health, chat)
+- Request/response schemas
+- Authentication methods
+- Session management
+- Error handling
 
 Business users should interact using business terminology rather than technical metric names.
 
