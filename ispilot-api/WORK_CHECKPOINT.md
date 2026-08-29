@@ -197,20 +197,86 @@ Latest commits (most recent first):
 4. [Prior session commits for Phases 1-4]
 ```
 
+## Planned Sprints
+
+### Sprint 3: Metrics Integration & Deployment Validation
+**Goal**: Integrate observability into services and deploy to staging
+
+**Steps**:
+1. Integrate `track_vertex_latency()` into VertexAgentClient
+2. Integrate `track_cache_operation()` into SessionService  
+3. Deploy to staging environment
+4. Verify Cloud Logging entries in Google Cloud Console
+5. Set up Cloud Monitoring dashboard (use metrics_definitions.py queries)
+6. Configure alert policies in Cloud Monitoring
+7. Test metrics collection with real requests
+8. Validate all SLOs: p99 latency < 2000ms, error rate < 5%, cache hit rate > 70%
+
+**Estimated Checkpoints**: 12-15
+
+---
+
+### Sprint 4: Production Hardening
+**Goal**: Production-ready deployment with security and reliability
+
+**Steps**:
+1. Security review (OAuth tokens, secret rotation, IAM least privilege)
+2. Load testing (concurrent requests, sustained throughput)
+3. Chaos testing (Vertex AI timeouts, Firestore unavailable, auth failures)
+4. Production deployment procedures
+5. Health check tuning and auto-healing
+6. Rollback procedures and disaster recovery
+7. Incident response playbook
+
+**Estimated Checkpoints**: 10-12
+
+---
+
+### Sprint 5: Advanced Observability
+**Goal**: Enhanced visibility into system behavior
+
+**Steps**:
+1. Distributed tracing (Cloud Trace integration)
+2. Custom dashboards (Cloud Monitoring)
+3. SLO-based alerts and tracking
+4. Error budget calculations
+5. Weekly metrics reports automation
+6. Performance profiling and optimization recommendations
+
+**Estimated Checkpoints**: 8-10
+
+---
+
+### Sprint 6: Feature Enhancements (Future)
+**Goal**: New capabilities based on operational insights
+
+**Steps** (To be defined):
+- Multi-turn conversation optimization
+- Session persistence improvements
+- Custom model endpoints
+- Rate limiting policies
+- Advanced caching strategies
+
+**Status**: Pending user requirements
+
+---
+
 ## Next Steps (If Continuing)
 
-### Immediate Actions
-1. Deploy to staging environment and monitor metrics
-2. Verify Cloud Logging entries appear in Google Cloud Console
-3. Set up Cloud Monitoring dashboard using provided queries
-4. Configure alert policies in Cloud Monitoring
+### Immediate Actions (When Resuming)
+1. Review WORK_CHECKPOINT.md this section to understand remaining work
+2. Choose next sprint based on priority (Metrics Integration → Production Hardening → Advanced Observability)
+3. Check git log for latest commit: `git log --oneline -1`
+4. Verify all code is current: `git status`
+5. Set up environment: `python -m venv venv && source venv/bin/activate`
+6. Install dependencies: `pip install -r requirements.txt`
 
-### Future Enhancements
-1. Integrate `track_vertex_latency()` into VertexAgentClient
-2. Integrate `track_cache_operation()` into SessionService
-3. Add custom dashboard for IsPilot API metrics
-4. Implement SLO-based alerts and dashboards
-5. Add distributed tracing (Cloud Trace integration)
+### For Sprint 3 Start
+1. Review metrics definitions in `app/utils/metrics_definitions.py`
+2. Integrate decorators in `app/services/vertex_agent_client.py`
+3. Integrate context managers in `app/services/session_service.py`
+4. Update DEPLOYMENT.md with staging environment steps
+5. Deploy and validate metrics
 
 ## Summary
 Sprint 2 is **COMPLETE** with all 7 steps implemented, tested, and validated. The IsPilot API now has:
