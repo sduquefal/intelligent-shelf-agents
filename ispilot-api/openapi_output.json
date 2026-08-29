@@ -1,0 +1,293 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "IsPilot API",
+    "description": "\n    **IsPilot Agent API** - API facade for Vertex-hosted Intelligent Shelf (IsPilot) agent\n    \n    This API provides a unified interface for:\n    - **Chat Interface**: Send messages to the IsPilot agent for inventory and shelf analysis\n    - **Session Management**: Automatic session creation and management across requests\n    - **Security**: OAuth 2.0 Bearer token and API Key authentication\n    - **Observability**: Structured JSON logging, request tracking, and audit logs\n    \n    ## Authentication\n    All endpoints (except `/health` and `/docs`) require authentication via:\n    - **Production**: OAuth 2.0 Bearer token in `Authorization: Bearer <token>` header\n    - **Development**: API Key in `X-API-Key: <key>` header\n    \n    ## Request Headers\n    - `X-API-Key`: Required for development/local testing\n    - `X-Request-ID`: Optional, auto-generated if not provided. Use for request tracking.\n    - `X-User-ID`: Optional, captured in audit logs\n    - `X-Session-ID`: Optional, captured in audit logs\n    \n    ## Error Handling\n    All errors follow a standard ErrorResponse format:\n    ```json\n    {\n        \"error_code\": \"ERROR_TYPE\",\n        \"error_message\": \"Human readable description\",\n        \"request_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n        \"timestamp\": \"2026-08-29T03:38:06.750012\",\n        \"details\": null\n    }\n    ```\n    \n    ## API Endpoints\n    - `GET /health` - Health check\n    - `POST /chat` - Send message to IsPilot agent\n    - `GET /docs` - OpenAPI/Swagger documentation\n    - `GET /openapi.json` - OpenAPI schema\n    \n    ## Supported Error Codes\n    - `MISSING_API_KEY` - Authentication header is missing\n    - `INVALID_API_KEY` - Invalid or expired API key\n    - `AUTH_FAILED` - Authentication failed\n    - `VALIDATION_ERROR` - Request validation failed\n    - `VERTEX_TIMEOUT` - Vertex AI request timeout\n    - `VERTEX_ERROR` - Vertex AI backend error\n    - `FIRESTORE_UNAVAILABLE` - Session storage unavailable\n    - `SESSION_NOT_FOUND` - Session expired or not found\n    - `INTERNAL_SERVER_ERROR` - Unexpected server error\n    \n    ## Contact & Support\n    For issues or support, contact: team@example.com\n    ",
+    "version": "0.2.0"
+  },
+  "paths": {
+    "/chat": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Send a message to the IsPilot agent",
+        "description": "Submit a user message to the IsPilot agent and receive a response. Sessions are automatically created or reused based on the provided user_id and session_id.",
+        "operationId": "chat_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response from the agent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                },
+                "example": {
+                  "answer": "The inventory status for SKU 12345 is: In Stock (250 units)",
+                  "session_id": "session_550e8400-e29b-41d4-a716-446655440000",
+                  "request_id": "req_550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2026-08-29T03:38:06.750012",
+                  "status": "ok"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error in request body",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "VALIDATION_ERROR",
+                  "error_message": "field required",
+                  "request_id": "req_550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2026-08-29T03:38:06.750012"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication error (missing or invalid API key)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "INVALID_API_KEY",
+                  "error_message": "Invalid API key provided",
+                  "request_id": "req_550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2026-08-29T03:38:06.750012"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "INTERNAL_SERVER_ERROR",
+                  "error_message": "Internal server error",
+                  "request_id": "req_550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2026-08-29T03:38:06.750012",
+                  "details": {
+                    "exception_type": "RuntimeError"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health check endpoint",
+        "description": "Verify that the API is running and responding normally. Returns the current timestamp to validate timezone synchronization.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ChatRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "Unique identifier for the user sending the message",
+            "example": "user@example.com"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "The user's message or query to the IsPilot agent",
+            "example": "What is the inventory status for SKU 12345?"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id",
+            "description": "Optional session ID to maintain conversation context. If not provided, a new session is created.",
+            "example": "session_550e8400-e29b-41d4-a716-446655440000"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "message"
+        ],
+        "title": "ChatRequest",
+        "description": "Request model for chat endpoint.\n\nThis model represents a user's message request to the IsPilot agent.\nSessions are automatically managed based on user_id and optional session_id.",
+        "example": {
+          "message": "What is the inventory status for SKU 12345?",
+          "user_id": "user@example.com"
+        }
+      },
+      "ChatResponse": {
+        "properties": {
+          "answer": {
+            "type": "string",
+            "title": "Answer",
+            "description": "The agent's response to the user's message",
+            "example": "The inventory status for SKU 12345 is: In Stock (250 units)"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "Session ID for maintaining conversation context across multiple requests",
+            "example": "session_550e8400-e29b-41d4-a716-446655440000"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "Unique identifier for this request, useful for debugging and audit logs",
+            "example": "req_550e8400-e29b-41d4-a716-446655440000"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "ISO-8601 timestamp of when this response was generated",
+            "example": "2026-08-29T03:38:06.750012"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status of the request (ok for success, error for failures)",
+            "example": "ok"
+          }
+        },
+        "type": "object",
+        "required": [
+          "answer",
+          "session_id",
+          "request_id",
+          "timestamp",
+          "status"
+        ],
+        "title": "ChatResponse",
+        "description": "Response model for chat endpoint.\n\nRepresents a successful response from the IsPilot agent to a user's message.\nIncludes session management, request tracking, and timestamp information.",
+        "example": {
+          "answer": "The inventory status for SKU 12345 is: In Stock (250 units)",
+          "request_id": "req_550e8400-e29b-41d4-a716-446655440000",
+          "session_id": "session_550e8400-e29b-41d4-a716-446655440000",
+          "status": "ok",
+          "timestamp": "2026-08-29T03:38:06.750012"
+        }
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Health status of the API (healthy for running properly)",
+            "example": "healthy"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "ISO-8601 timestamp of when this health check was performed",
+            "example": "2026-08-29T03:38:06.750012"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "timestamp"
+        ],
+        "title": "HealthResponse",
+        "description": "Response model for health endpoint.\n\nUsed to verify that the API is running and responding normally.\nUseful for load balancers and monitoring systems.",
+        "example": {
+          "status": "healthy",
+          "timestamp": "2026-08-29T03:38:06.750012"
+        }
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

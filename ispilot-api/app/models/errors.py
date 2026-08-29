@@ -9,20 +9,37 @@ from pydantic import BaseModel, Field
 
 
 class ErrorResponse(BaseModel):
-    """Standard error response contract."""
+    """
+    Standard error response contract used across all API endpoints.
+    
+    All API errors return this consistent structure for easy programmatic handling
+    and debugging. The error_code field allows clients to handle specific error types,
+    while error_message provides a user-friendly description.
+    """
 
     error_code: str = Field(
-        description="Machine-readable error code (e.g., VERTEX_TIMEOUT, AUTH_FAILED)"
+        description="Machine-readable error code (e.g., VERTEX_TIMEOUT, AUTH_FAILED). "
+                    "Use this for programmatic error handling and routing.",
+        example="VERTEX_TIMEOUT"
     )
-    error_message: str = Field(description="Human-readable error message")
-    request_id: Optional[str] = Field(default=None, description="Request ID for tracing")
+    error_message: str = Field(
+        description="Human-readable error message suitable for displaying to users",
+        example="Request to Vertex AI timed out. Please retry."
+    )
+    request_id: Optional[str] = Field(
+        default=None,
+        description="Unique identifier for this request. Use this when reporting issues to support.",
+        example="550e8400-e29b-41d4-a716-446655440000"
+    )
     timestamp: str = Field(
         default_factory=lambda: datetime.utcnow().isoformat(),
-        description="Error timestamp (ISO-8601)",
+        description="ISO-8601 timestamp of when this error occurred",
+        example="2026-08-28T10:30:45.123456"
     )
     details: Optional[dict[str, Any]] = Field(
         default=None,
-        description="Additional error context (development only)",
+        description="Additional error context and debug information. Only present when debug mode is enabled.",
+        example={"exception_type": "TimeoutError", "retry_after_seconds": 5}
     )
 
     class Config:
@@ -32,22 +49,24 @@ class ErrorResponse(BaseModel):
                 "error_message": "Request to Vertex AI timed out. Please retry.",
                 "request_id": "550e8400-e29b-41d4-a716-446655440000",
                 "timestamp": "2026-08-28T10:30:45.123456",
+                "details": None
             }
         }
 
 
 class ValidationErrorResponse(ErrorResponse):
-    """Validation error response."""
+    """Validation error response for malformed requests."""
 
     error_code: str = "VALIDATION_ERROR"
     details: Optional[dict[str, Any]] = Field(
         default=None,
-        description="Field validation errors",
+        description="Field validation errors with paths and descriptions",
+        example={"field_errors": {"message": "field required"}}
     )
 
 
 class AuthenticationErrorResponse(ErrorResponse):
-    """Authentication error response."""
+    """Authentication error response for auth failures."""
 
     error_code: str = "AUTH_FAILED"
 
@@ -59,23 +78,24 @@ class NotFoundErrorResponse(ErrorResponse):
 
 
 class ServerErrorResponse(ErrorResponse):
-    """Server error response."""
+    """Server error response for internal failures."""
 
     error_code: str = "INTERNAL_SERVER_ERROR"
 
 
 # Standard error codes used across the API
+# Each code has a description for documentation purposes
 ERROR_CODES = {
-    "MISSING_API_KEY": "Authorization header or X-API-Key header required",
-    "INVALID_API_KEY": "Invalid API key provided",
-    "AUTH_FAILED": "Authentication failed",
-    "SERVER_CONFIG_ERROR": "API server misconfiguration",
+    "MISSING_API_KEY": "Authorization header or X-API-Key header is required for this endpoint",
+    "INVALID_API_KEY": "Invalid or expired API key provided",
+    "AUTH_FAILED": "Authentication failed. Please check your credentials.",
+    "SERVER_CONFIG_ERROR": "API server misconfiguration. Contact support if this persists.",
     "VERTEX_TIMEOUT": "Request to Vertex AI timed out. Please retry.",
-    "VERTEX_ERROR": "Error communicating with Vertex AI",
+    "VERTEX_ERROR": "Error communicating with Vertex AI backend",
     "FIRESTORE_UNAVAILABLE": "Session storage temporarily unavailable",
     "SESSION_NOT_FOUND": "Session not found or expired",
-    "VALIDATION_ERROR": "Request validation failed",
+    "VALIDATION_ERROR": "Request validation failed. Check request body format.",
     "NOT_FOUND": "Requested resource not found",
-    "INTERNAL_SERVER_ERROR": "Unexpected server error",
-    "RATE_LIMIT_EXCEEDED": "Rate limit exceeded. Please retry later.",
+    "INTERNAL_SERVER_ERROR": "Unexpected server error. Contact support if this persists.",
+    "RATE_LIMIT_EXCEEDED": "Rate limit exceeded. Please retry after some time.",
 }
