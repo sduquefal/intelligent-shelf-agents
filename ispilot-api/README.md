@@ -69,19 +69,24 @@ Uses **Workload Identity** - no credential files required. The service account (
 **Client Authentication** (calling the API):
 
 ```bash
-# Get an identity token
-AUTH_TOKEN=$(gcloud auth print-identity-token \
-  --audiences https://ispilot-api-46y2f3tyja-uc.a.run.app)
+# Get an identity token using impersonation for the project service account
+TOKEN=$(gcloud auth print-identity-token \
+  --impersonate-service-account=sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com)
 
 # Use the token in requests
-curl -X POST https://ispilot-api-46y2f3tyja-uc.a.run.app/chat \
+curl -sS -X POST "https://ispilot-api-46y2f3tyja-uc.a.run.app/chat" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $AUTH_TOKEN" \
-  -d '{
-    "user_id": "sebastian",
-    "message": "How is Talca Colin performing?"
-  }'
+  -H "Authorization: Bearer ${TOKEN}" \
+  --data '{"user_id":"debug-user","message":"Give me a simple answer about inventory","session_id":"5411387247947677696"}'
 ```
+
+**Critical validation rules:**
+
+- This is the working production smoke test for this API.
+- `--data` must be valid JSON and must be passed as a single shell string.
+- Do not send malformed JSON or truncated payloads; they can produce empty engine output even when the service is healthy.
+- When continuing a conversation, reuse the same `session_id` from the earlier response.
+- If the project is reused as a template, keep the Cloud Run API auth token generation in this API-level README; the actual agent logic belongs in the root agent source.
 
 ### Local Development
 

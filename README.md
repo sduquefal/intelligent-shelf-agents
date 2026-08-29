@@ -6,6 +6,46 @@
 
 ISPilot is an enterprise AI platform designed to provide retail business users with natural language access to Intelligent Shelf operational data.
 
+## Repository ownership and template guidance
+
+This repository contains two layers:
+
+- Root project layer: agent implementation, business orchestration, and the ADK/Vertex app logic.
+- API layer: the production-facing FastAPI wrapper in `ispilot-api/` that exposes the agent via Cloud Run.
+
+For template reuse, keep this split explicit:
+
+- Configure the agent logic and deployment source in the root project or agent folder.
+- Configure the API-facing runtime values, including `VERTEX_ENGINE_ID`, `GOOGLE_CLOUD_PROJECT`, and Cloud Run auth settings, in `ispilot-api`.
+- The API should remain a thin adapter over the deployed reasoning engine; it should not own the core agent business logic.
+
+## Production smoke test (working payload)
+
+Use this exact pattern when validating the live service. The key rules are:
+
+- Always request an identity token with the service account impersonation command.
+- Always send valid JSON in a single `--data` payload.
+- Always include a valid `session_id` if reusing the same session.
+- Do not break JSON quoting in shell commands.
+
+```bash
+TOKEN=$(gcloud auth print-identity-token \
+  --impersonate-service-account=sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com)
+
+curl -sS -X POST "https://ispilot-api-46y2f3tyja-uc.a.run.app/chat" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  --data '{"user_id":"debug-user","message":"Give me a simple answer about inventory","session_id":"5411387247947677696"}'
+```
+
+Expected behavior:
+
+- HTTP 200
+- `status: "ok"`
+- A text answer in the `answer` field, not `{"output": []}`
+
+This command is the reference validation for production and should be copied into deployment templates or smoke-test scripts.
+
 The platform transforms operational metrics into actionable business insights through a specialized multi-agent architecture built on:
 
 - Google ADK
