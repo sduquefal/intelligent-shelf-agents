@@ -9,7 +9,9 @@ from fastapi.responses import JSONResponse
 
 from app.api.chat import router as chat_router
 from app.config.settings import settings
+from app.middleware.audit import AuditLoggingMiddleware
 from app.middleware.auth import APIKeyValidationMiddleware
+from app.models.errors import ErrorResponse
 from app.models.responses import HealthResponse
 from app.utils.logging import generate_request_id, get_structured_logger, set_request_id
 
@@ -21,6 +23,9 @@ app = FastAPI(
     version="0.2.0",
     description="API facade for Vertex-hosted IsPilot agent",
 )
+
+# Audit logging middleware (must be added first to capture all requests)
+app.add_middleware(AuditLoggingMiddleware)
 
 # CORS middleware
 app.add_middleware(
@@ -62,13 +67,14 @@ async def value_error_handler(request: Request, exc: ValueError):
             "error": str(exc),
         },
     )
+    error_response = ErrorResponse(
+        error_code="VALIDATION_ERROR",
+        error_message=str(exc),
+        request_id=request_id,
+    )
     return JSONResponse(
         status_code=400,
-        content={
-            "error_code": "VALIDATION_ERROR",
-            "error_message": str(exc),
-            "request_id": request_id,
-        },
+        content=error_response.model_dump(),
     )
 
 
@@ -85,13 +91,15 @@ async def general_exception_handler(request: Request, exc: Exception):
             "exception_type": type(exc).__name__,
         },
     )
+    error_response = ErrorResponse(
+        error_code="INTERNAL_SERVER_ERROR",
+        error_message="Internal server error",
+        request_id=request_id,
+        details={"exception_type": type(exc).__name__} if settings.debug else None,
+    )
     return JSONResponse(
         status_code=500,
-        content={
-            "error_code": "INTERNAL_ERROR",
-            "error_message": "Internal server error",
-            "request_id": request_id,
-        },
+        content=error_response.model_dump(),
     )
 
 
