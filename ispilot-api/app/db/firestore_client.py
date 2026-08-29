@@ -1,10 +1,18 @@
 from __future__ import annotations
 
-from google.cloud import firestore
+try:
+    from google.cloud import firestore
+except ImportError:  # pragma: no cover - dependency may be absent in test/local envs
+    firestore = None
 
 
 class FirestoreSessionStore:
     def __init__(self, project_id: str, collection_name: str = "user_sessions") -> None:
+        if firestore is None:
+            raise ImportError(
+                "google-cloud-firestore is required to use FirestoreSessionStore. "
+                "Install the dependency or use the in-memory fallback."
+            )
         self.client = firestore.Client(project=project_id)
         self.collection_name = collection_name
 

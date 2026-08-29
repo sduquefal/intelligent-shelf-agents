@@ -1,7 +1,7 @@
 """Tests for chat endpoint."""
 
 import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 
 class TestChatEndpoint:
@@ -24,14 +24,10 @@ class TestChatEndpoint:
         # Mock the services
         with patch("app.api.chat.session_service") as mock_session_service:
             mock_session = {"session_id": "test-session-123"}
-            mock_session_service.get_or_create = AsyncMock(
-                return_value=mock_session
-            )
+            mock_session_service.get_or_create = MagicMock(return_value=mock_session)
 
             with patch("app.api.chat.vertex_client") as mock_vertex:
-                mock_vertex.send_message = AsyncMock(
-                    return_value="Response from Vertex"
-                )
+                mock_vertex.chat = MagicMock(return_value=("Response from Vertex", "test-session-123"))
 
                 # Act
                 response = client.post(
@@ -50,14 +46,10 @@ class TestChatEndpoint:
         # Mock the services
         with patch("app.api.chat.session_service") as mock_session_service:
             mock_session = {"session_id": "test-session-123"}
-            mock_session_service.get_or_create = AsyncMock(
-                return_value=mock_session
-            )
+            mock_session_service.get_or_create = MagicMock(return_value=mock_session)
 
             with patch("app.api.chat.vertex_client") as mock_vertex:
-                mock_vertex.send_message = AsyncMock(
-                    return_value="Response from Vertex"
-                )
+                mock_vertex.chat = MagicMock(return_value=("Response from Vertex", "test-session-123"))
 
                 # Act
                 response = client.post(
@@ -100,11 +92,11 @@ class TestChatEndpoint:
         # Arrange
         with patch("app.api.chat.session_service") as mock_session_service:
             mock_session = {"session_id": "session-123456"}
-            mock_session_service.get = AsyncMock(return_value=mock_session)
+            mock_session_service.get = MagicMock(return_value=mock_session)
 
             with patch("app.api.chat.vertex_client") as mock_vertex:
-                mock_vertex.send_message = AsyncMock(
-                    return_value="Response from Vertex"
+                mock_vertex.chat = MagicMock(
+                    return_value=("Response from Vertex", "session-123456")
                 )
 
                 # Act
@@ -136,10 +128,10 @@ class TestChatEndpoint:
         """Test that bearer tokens are accepted regardless of scheme casing."""
         with patch("app.api.chat.session_service") as mock_session_service:
             mock_session = {"session_id": "test-session-123"}
-            mock_session_service.get_or_create = AsyncMock(return_value=mock_session)
+            mock_session_service.get_or_create = MagicMock(return_value=mock_session)
 
             with patch("app.api.chat.vertex_client") as mock_vertex:
-                mock_vertex.chat = AsyncMock(return_value=("Response from Vertex", "test-session-123"))
+                mock_vertex.chat = MagicMock(return_value=("Response from Vertex", "test-session-123"))
 
                 response = client.post(
                     "/chat",
@@ -155,7 +147,7 @@ class TestChatEndpoint:
         """Test that error responses have correct structure."""
         # Arrange
         with patch("app.api.chat.session_service") as mock_session_service:
-            mock_session_service.get_or_create = AsyncMock(
+            mock_session_service.get_or_create = MagicMock(
                 side_effect=Exception("Service error")
             )
 

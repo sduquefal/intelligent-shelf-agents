@@ -28,7 +28,7 @@ class APIKeyValidationMiddleware(BaseHTTPMiddleware):
 
         # Check for OAuth token (Authorization: Bearer) - GCP standard authentication
         auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
+        if auth_header.strip().lower().startswith("bearer "):
             # OAuth token is valid; allow request to proceed
             self.logger.info(
                 "Request authenticated via OAuth",
@@ -61,24 +61,3 @@ class APIKeyValidationMiddleware(BaseHTTPMiddleware):
             status_code=401,
             media_type="application/json",
         )
-
-        # Extract user_id from header if provided
-        user_id = request.headers.get("X-User-ID")
-        if user_id:
-            request.state.user_id = user_id
-
-        # Add request_id from context if available
-        if hasattr(request.state, "request_id"):
-            self.logger.info(
-                "API request authenticated",
-                extra={
-                    "method": request.method,
-                    "path": request.url.path,
-                    "request_id": request.state.request_id,
-                    "user_id": user_id,
-                },
-            )
-
-        return await call_next(request)
-
-        return await call_next(request)
