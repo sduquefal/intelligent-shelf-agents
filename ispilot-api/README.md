@@ -88,6 +88,27 @@ curl -sS -X POST "https://ispilot-api-46y2f3tyja-uc.a.run.app/chat" \
 - When continuing a conversation, reuse the same `session_id` from the earlier response.
 - If the project is reused as a template, keep the Cloud Run API auth token generation in this API-level README; the actual agent logic belongs in the root agent source.
 
+### IAM impersonation note (important)
+
+A common failure mode is trying to generate the token with a personal Google account that does not have permission to impersonate the Cloud Run service account. The current validated path is:
+
+```bash
+# Activate the project service account directly
+gcloud auth activate-service-account \
+  sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com \
+  --project=corp-stro-salesinventory-prod
+
+# Then generate the identity token without impersonation
+TOKEN=$(gcloud auth print-identity-token)
+
+curl -sS -X POST "https://ispilot-api-46y2f3tyja-uc.a.run.app/chat" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -d '{"user_id":"debug-user","message":"hola","session_id":null}'
+```
+
+If the request fails with `PERMISSION_DENIED` and a message like `iam.serviceAccounts.getAccessToken` or `Failed to impersonate ...`, the issue is not the app logic; it is missing IAM permission to impersonate or activate the target service account. The required permission is usually `roles/iam.serviceAccountTokenCreator` on the target service account.
+
 ### Local Development
 
 Use API Key authentication for testing:

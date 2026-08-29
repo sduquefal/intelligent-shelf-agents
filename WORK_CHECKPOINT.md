@@ -29,12 +29,35 @@ The API is the deployment layer that exposes the root logic through a FastAPI en
 
 ### Root cause of earlier issue
 
-The earlier failure was not a root-service outage. It was caused by malformed request payload / shell quoting in the validation command, not by a broken deployment or agent implementation.
+The earlier failure was not a root-service outage. It was caused by a combination of malformed request payload / shell quoting and then a separate GCP IAM impersonation issue while generating the bearer token for the production endpoint.
 
 This is the key distinction to preserve in any handoff or future template reuse:
 - the service is operational
 - the contract is valid
-- the issue was request formatting, not deployment health
+- the issue was not the business logic or a broken deployment
+- the real blockers were request formatting and token-generation permissions for the active Google identity
+
+### Validated remote auth flow
+
+The working production validation path is now confirmed with the activated service account credentials:
+
+```bash
+# activate service account directly
+gcloud auth activate-service-account \
+  sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com \
+  --project=corp-stro-salesinventory-prod
+
+TOKEN=$(gcloud auth print-identity-token)
+
+curl -sS -X POST "https://ispilot-api-46y2f3tyja-uc.a.run.app/chat" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -d '{"user_id":"debug-user","message":"Analiza la disponibilidad en góndola de Talca Colín hoy","session_id":null}'
+```
+
+This returned a valid business answer with `status: "ok"`, including a real `session_id` and meaningful store-level operational analysis. This confirms the service is healthy end-to-end when using the correct identity context.
+
+If the token generation fails with `PERMISSION_DENIED` / `iam.serviceAccounts.getAccessToken`, the next action is to grant `roles/iam.serviceAccountTokenCreator` to the impersonating identity or activate the correct service account directly before retrying the API call.
 
 ---
 
