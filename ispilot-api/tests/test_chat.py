@@ -132,6 +132,23 @@ class TestChatEndpoint:
         # Assert
         assert response.status_code == 401
 
+    def test_chat_accepts_lowercase_bearer_scheme(self, client, valid_chat_request):
+        """Test that bearer tokens are accepted regardless of scheme casing."""
+        with patch("app.api.chat.session_service") as mock_session_service:
+            mock_session = {"session_id": "test-session-123"}
+            mock_session_service.get_or_create = AsyncMock(return_value=mock_session)
+
+            with patch("app.api.chat.vertex_client") as mock_vertex:
+                mock_vertex.chat = AsyncMock(return_value=("Response from Vertex", "test-session-123"))
+
+                response = client.post(
+                    "/chat",
+                    json=valid_chat_request,
+                    headers={"Authorization": "bearer test-token"},
+                )
+
+        assert response.status_code == 200
+
     def test_chat_error_response_structure(
         self, client, api_key_header, valid_chat_request
     ):
