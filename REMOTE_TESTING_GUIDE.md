@@ -3,10 +3,11 @@
 ## Setup on Remote Machine (PLAN B)
 
 **Prerequisite**: Remote machine has:
-- ✓ Service account credentials (sa-tot-osa-key.json)
+- ✓ Service account credentials (available at: `C:\Users\sduque\OneDrive - Falabella\Proyectos\2026\is\sa\key.json`)
 - ✓ Python 3.10+
 - ✓ gcloud CLI configured
 - ✓ Git access
+- ✓ google-cloud-aiplatform installed (pip install google-cloud-aiplatform)
 
 ### Step 1: Clone & Setup
 
