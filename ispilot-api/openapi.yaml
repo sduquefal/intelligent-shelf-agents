@@ -1,0 +1,203 @@
+openapi: 3.1.0
+info:
+  title: IsPilot API
+  version: 0.2.0
+  description: |
+    API facade for the IsPilot intelligent shelf agent.
+    This service exposes the validated business reasoning flow to enterprise channels such as
+    Copilot Studio, Microsoft Teams, and custom applications.
+  contact:
+    name: IsPilot Team
+    email: team@example.com
+servers:
+  - url: https://ispilot-api-46y2f3tyja-uc.a.run.app
+    description: Production Cloud Run service
+  - url: http://localhost:8080
+    description: Local development server
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Returns service health and timestamp.
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                timestamp: '2026-08-29T10:30:45.123456'
+  /chat:
+    post:
+      summary: Send a chat message to IsPilot
+      description: |
+        Sends a message to the IsPilot reasoning flow and returns the business answer.
+        The endpoint supports session reuse through the optional session_id field.
+      operationId: chatWithIsPilot
+      tags:
+        - Chat
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            examples:
+              standard:
+                summary: Business user question
+                value:
+                  user_id: sebastian
+                  message: How is Talca Colin performing?
+                  session_id: null
+              followup:
+                summary: Follow-up in same session
+                value:
+                  user_id: sebastian
+                  message: How can Talca Colin improve?
+                  session_id: 5411387247947677696
+      responses:
+        '200':
+          description: Response from the agent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              example:
+                answer: |
+                  Talca Colín is performing at 95.16% SNSG, with 0.67% Bodega and 4.17% Quiebre.
+                  The main risks are concentrated in stock availability and replenishment timing.
+                session_id: '5411387247947677696'
+                request_id: 'req_550e8400-e29b-41d4-a716-446655440000'
+                timestamp: '2026-08-29T03:38:06.750012'
+                status: ok
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Production authentication for Cloud Run. Use an identity token generated for the
+        service account, for example:
+        gcloud auth print-identity-token --impersonate-service-account=sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Local-development authentication header for the FastAPI app.
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+          example: '2026-08-29T10:30:45.123456'
+    ChatRequest:
+      type: object
+      required:
+        - user_id
+        - message
+      properties:
+        user_id:
+          type: string
+          description: Unique identifier for the user or caller.
+          example: sebastian
+        message:
+          type: string
+          description: Natural-language request to the IsPilot agent.
+          example: How is Talca Colin performing?
+        session_id:
+          type: string
+          nullable: true
+          description: Optional session identifier used to maintain conversation context.
+          example: '5411387247947677696'
+    ChatResponse:
+      type: object
+      required:
+        - answer
+        - session_id
+        - request_id
+        - timestamp
+        - status
+      properties:
+        answer:
+          type: string
+          description: Final business response returned by the agent.
+          example: Talca Colín is performing at 95.16% SNSG.
+        session_id:
+          type: string
+          description: The effective session used for this conversation.
+          example: '5411387247947677696'
+        request_id:
+          type: string
+          description: Correlation id for tracing the request.
+          example: 'req_550e8400-e29b-41d4-a716-446655440000'
+        timestamp:
+          type: string
+          format: date-time
+          example: '2026-08-29T03:38:06.750012'
+        status:
+          type: string
+          enum: [ok]
+          example: ok
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - error_message
+        - request_id
+      properties:
+        error_code:
+          type: string
+          example: INVALID_API_KEY
+        error_message:
+          type: string
+          example: Authentication failed
+        request_id:
+          type: string
+          example: 'req_550e8400-e29b-41d4-a716-446655440000'
+        timestamp:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-08-29T03:38:06.750012'
+        details:
+          nullable: true
+          description: Additional details for debugging when available.
+          example: null
