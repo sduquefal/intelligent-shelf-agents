@@ -490,10 +490,21 @@ What actions should be taken first?
 
 ## Next Milestones
 
+### Priority 1: Microsoft Teams Integration (In Progress)
+Using **Microsoft 365 Agents SDK** with a dedicated Teams Bridge service:
+- [ ] Azure Bot registration & credentials
+- [ ] Teams Bridge Cloud Run service deployment
+- [ ] MS 365 SDK handlers implementation
+- [ ] Teams app manifest & publishing
+- [ ] End-to-end Teams conversation testing
+
+**See**: [docs/TEAMS_SDK_INTEGRATION.md](docs/TEAMS_SDK_INTEGRATION.md) for complete setup guide.  
+**Architecture Rationale**: [docs/ARCHITECTURE_RESET_TEAMS_SDK.md](docs/ARCHITECTURE_RESET_TEAMS_SDK.md)
+
+### Future Milestones
 - Root Cause Agent
-- Executive Agent
+- Executive Agent  
 - Recommendation Engine
-- Microsoft Teams Integration
 - Copilot Studio Integration
 - Enterprise APIs
 - Observability & Telemetry

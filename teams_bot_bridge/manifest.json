@@ -1,0 +1,65 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.16/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.16",
+  "version": "1.0.0",
+  "id": "53ead9aa-24aa-44e7-b485-81a988e7492f",
+  "packageName": "com.ispilot.teams.bridge",
+  "developer": {
+    "name": "Retail Analytics Team",
+    "websiteUrl": "https://example.com",
+    "privacyUrl": "https://example.com/privacy",
+    "termsOfUseUrl": "https://example.com/terms"
+  },
+  "name": {
+    "short": "IsPilot",
+    "full": "Intelligent Shelf Pilot - Analytics Bot"
+  },
+  "description": {
+    "short": "AI-powered retail analytics assistant",
+    "full": "IsPilot is an AI-powered assistant that provides shelf analytics, performance insights, and actionable recommendations for store operations."
+  },
+  "icons": {
+    "outline": "icon-outline.png",
+    "color": "icon-color.png"
+  },
+  "accentColor": "#004578",
+  "bots": [
+    {
+      "botId": "53ead9aa-24aa-44e7-b485-81a988e7492f",
+      "scopes": [
+        "personal",
+        "team",
+        "groupChat"
+      ],
+      "commandLists": [
+        {
+          "scopes": [
+            "personal",
+            "team",
+            "groupChat"
+          ],
+          "commands": [
+            {
+              "title": "Help",
+              "description": "Show available commands"
+            },
+            {
+              "title": "Status",
+              "description": "Check store status and alerts"
+            }
+          ]
+        }
+      ],
+      "isNotificationOnly": false,
+      "supportsFiles": false,
+      "supportsCalling": false,
+      "supportsVideo": false,
+      "supportsAudio": false
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": []
+}

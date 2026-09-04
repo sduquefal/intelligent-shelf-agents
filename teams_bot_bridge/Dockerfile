@@ -2,12 +2,20 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt ./
+# Install dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py ./app.py
+# Copy application code
+COPY main.py .
 
+# Set environment
 ENV PORT=8080
 EXPOSE 8080
 
-CMD exec uvicorn app:app --host 0.0.0.0 --port ${PORT}
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD python -c "import httpx; httpx.get('http://localhost:8080/health')" || exit 1
+
+# Run application
+CMD exec uvicorn main:app --host 0.0.0.0 --port ${PORT} --log-level info

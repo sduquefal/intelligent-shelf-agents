@@ -8,12 +8,14 @@ Expose the validated IsPilot API through Microsoft Copilot Studio and then Micro
 
 ## Architecture
 
+### Option 1: Copilot Studio + Custom Connector (Recommended for Teams/enterprise)
+
 ```text
 User in Teams / Copilot Studio
     ↓
 Custom Connector
     ↓
-Cloud Run API
+Cloud Run API (ispilot-api)
     ↓
 Vertex AI Reasoning Engine
     ↓
@@ -21,6 +23,44 @@ Coordinator + Specialist Agents
     ↓
 Business answers
 ```
+
+### Option 2: Direct Teams Bridge Webhook (Current implementation)
+
+The direct Teams Bridge approach provides a lightweight, direct webhook pattern:
+
+```text
+User in Teams
+    ↓
+Teams Webhook → Cloud Run (teams-ispilot-bridge) [PUBLIC]
+    ↓
+[Teams Bridge generates identity token using sa-tot-osa]
+    ↓
+Cloud Run (ispilot-api) [PRIVATE]
+    ↓
+Vertex AI Reasoning Engine
+    ↓
+Response back through Teams
+```
+
+**Architecture Diagram:**
+- Teams sends unauthenticated HTTP POST to `teams-ispilot-bridge` webhook
+- Teams Bridge validates the request, generates an identity token
+- Teams Bridge calls `ispilot-api` with the token in `Authorization: Bearer {token}` header
+- IsPilot API validates the token and processes the request
+- Response flows back through the bridge to Teams
+
+**When to use Teams Bridge:**
+- Direct integration with Teams without Copilot Studio
+- Simpler deployment (single service endpoint)
+- Fast iteration on Teams bot scenarios
+
+**When to use Copilot Studio:**
+- Enterprise channel integration (Teams, Outlook, etc.)
+- Advanced routing and branching logic needed
+- Managed lifecycle and versioning desired
+
+**Required IAM Setup for Teams Bridge:**
+See [Teams Bridge README](../teams_bot_bridge/README.md) for complete IAM configuration steps.
 
 ## Production contract
 

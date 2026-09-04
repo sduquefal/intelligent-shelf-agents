@@ -143,6 +143,86 @@ gcloud projects add-iam-policy-binding corp-stro-salesinventory-prod \
 
 ---
 
+## Cloud Run Service Authentication: Teams Bridge Integration
+
+### Architecture
+
+The IsPilot API is called by the **Teams Bridge** service (another Cloud Run service). This creates a two-tier authentication requirement:
+
+```
+┌─────────────────┐
+│   Microsoft     │
+│     Teams       │
+└────────┬────────┘
+         │ (unauthenticated webhook)
+         ↓
+┌─────────────────────────────────────────────────┐
+│  teams-ispilot-bridge (PUBLIC Cloud Run)        │
+│  Identity: sa-tot-osa                           │
+│                                                 │
+│  Requires:                                      │
+│  • roles/run.invoker (on allUsers)             │
+│  • roles/iam.serviceAccountTokenCreator        │
+└────────┬────────────────────────────────────────┘
+         │ (with identity token)
+         ↓
+┌─────────────────────────────────────────────────┐
+│  ispilot-api (PRIVATE Cloud Run)                │
+│  Identity: sa-tot-osa                           │
+│                                                 │
+│  Requires:                                      │
+│  • roles/run.invoker (for Teams Bridge SA)    │
+│  • All roles below for backend services        │
+└─────────────────────────────────────────────────┘
+```
+
+### Required IAM Bindings for Teams Bridge
+
+#### 1. Teams Bridge can invoke IsPilot API
+
+**Role:** `roles/run.invoker` on `ispilot-api` service
+**Target:** Service `ispilot-api` in `us-central1`
+**Member:** `serviceAccount:sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com`
+
+```bash
+gcloud run services add-iam-policy-binding ispilot-api \
+  --region=us-central1 \
+  --project=corp-stro-salesinventory-prod \
+  --member=serviceAccount:sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com \
+  --role=roles/run.invoker
+```
+
+**Verification:**
+```bash
+gcloud run services get-iam-policy ispilot-api \
+  --region=us-central1 \
+  --project=corp-stro-salesinventory-prod \
+  --format='table(bindings.role,bindings.members)'
+```
+
+#### 2. Teams Bridge can generate identity tokens
+
+**Role:** `roles/iam.serviceAccountTokenCreator` at project level
+**Member:** `serviceAccount:sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com`
+
+```bash
+gcloud projects add-iam-policy-binding corp-stro-salesinventory-prod \
+  --member=serviceAccount:sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com \
+  --role=roles/iam.serviceAccountTokenCreator
+```
+
+**Verification:**
+```bash
+gcloud projects get-iam-policy corp-stro-salesinventory-prod \
+  --flatten="bindings[].members" \
+  --filter="bindings.members:sa-tot-osa@corp-stro-salesinventory-prod.iam.gserviceaccount.com AND bindings.role:roles/iam.serviceAccountTokenCreator" \
+  --format=json
+```
+
+**Why:** Teams Bridge needs to generate an identity token (JWT) using the service account's private key, which is then sent with `Authorization: Bearer {token}` header to this API.
+
+---
+
 ## Cloud Run Configuration
 
 ### Deployment Settings

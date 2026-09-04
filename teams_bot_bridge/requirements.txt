@@ -1,5 +1,24 @@
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
+# Teams Bridge for IsPilot - Python Dependencies
+
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+
+# Microsoft 365 & Azure
+# Note: MS 365 Agents SDK is in preview - check for latest version
+# microsoft-365-agents-sdk>=0.2.0  # TODO: Update when officially released
+python-dotenv==1.0.0
+
+# Google Cloud (for identity tokens)
+google-auth==2.25.0
+google-cloud-logging==3.8.0
+
+# HTTP & JSON
+httpx==0.25.0
 requests==2.32.3
-google-auth==2.34.0
-python-dotenv==1.0.1
+
+# Development (optional)
+# pytest==7.4.0
+# pytest-asyncio==0.21.0
+

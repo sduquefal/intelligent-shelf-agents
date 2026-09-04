@@ -66,14 +66,46 @@ This is the next meaningful quality gate. The API contract is stable, but we sti
 - recommendation quality
 - multi-turn session behavior
 
-### Channel integration
-Teams / Copilot should be treated as an application layer on top of this API, not as the primary debugging surface. The sequence should be:
-1. API contract stable
-2. business validation passed
-3. enterprise channel integration enabled
+### Teams Bridge Integration (NEXT PRIORITY)
+
+Teams / Copilot will be enabled through a dedicated **Teams Bridge** service built with **Microsoft 365 Agents SDK**:
+
+**What this means for ispilot-api**:
+- ispilot-api remains the **private backend** (no direct Teams access)
+- Teams Bridge becomes the **public proxy** that accepts Teams messages
+- Bridge validates JWT from Azure Bot Service and invokes ispilot-api with sa-tot-osa identity token
+- ispilot-api receives requests from Bridge and processes them as usual
+
+**No changes required to ispilot-api itself**, but:
+- Ensure it continues to validate bearer tokens correctly
+- Keep the identity token flow stable
+- Consider adding request context headers for audit/tracing from Bridge
+
+**Bridge will be in separate `teams_bot_bridge` Cloud Run service with**:
+- MS 365 Agents SDK for Teams integration
+- JWT validation from Azure Bot Service
+- HTTP client to call ispilot-api with proper auth
+- Handlers for message routing and session context
 
 ### Regression guardrails
 The passwordless bearer-token smoke test should remain as the default operational regression step after future deployment or auth changes.
+
+---
+
+## Documentation integration
+
+**Date**: 2026-08-30
+
+All deployment instructions have been integrated into README.md. The separate DEPLOYMENT.md file is no longer needed. The repository now follows a cleaner structure:
+
+**Files kept as separate reference documents**:
+- `README.md` - Complete API documentation including deployment, architecture, authentication, and local development
+- `WORK_CHECKPOINT.md` - Ongoing work status and task tracking
+- `docs/PERMISSIONS_AND_IAM.md` - IAM setup and security role configuration
+- `docs/SESSION_SERVICE_FIRESTORE_FALLBACK.md` - Session management implementation
+- `docs/AUTHENTICATION_CHANGES.md` - Authentication evolution and details
+
+This consolidation makes the documentation more navigable and reduces file fragmentation.
 
 ---
 

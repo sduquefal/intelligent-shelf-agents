@@ -84,19 +84,51 @@ If the token generation fails with `PERMISSION_DENIED` / `iam.serviceAccounts.ge
 
 ## Remaining work
 
-### 1) Business-scenario validation
-This is the remaining real quality gate. An API can be healthy while still failing business content quality. The next step is to validate realistic retail questions across:
+### 1) Teams Bridge with Microsoft 365 Agents SDK (PRIORITY)
+
+**Goal**: Create a proxy bot layer that sits between Microsoft Teams and ispilot-api, using the official Microsoft 365 Agents SDK (Python).
+
+**Architecture**:
+```
+Teams User → Azure Bot Service
+           ↓
+      Teams Bridge Bot (Cloud Run)
+      [MS 365 Agents SDK]
+           ↓
+      [JWT Validation from Azure]
+           ↓
+      ispilot-api (Cloud Run)
+           ↓
+      Vertex AI Reasoning Engine
+```
+
+**Tasks**:
+- [ ] Register bot in Azure AD / Teams Developer Portal → get Microsoft App ID + Secret
+- [ ] Create Python app with `microsoft-365-agents-sdk` + `fastapi`
+- [ ] Implement `AgentAuthConfiguration` with JWT validation from Azure Bot Service
+- [ ] Add handler to receive Teams activities and route to ispilot-api
+- [ ] Deploy as new Cloud Run service (`teams-ispilot-bridge`)
+- [ ] Configure `a365.config.json` with Microsoft App credentials and ispilot-api endpoint
+- [ ] Test end-to-end: Teams message → Bridge → API → Response
+- [ ] Add Microsoft Teams manifest and publish app to Teams catalog
+
+**Key Files to Create/Update**:
+- `teams_bot_bridge/a365.config.json` - Microsoft 365 Agents SDK config
+- `teams_bot_bridge/main.py` - Bridge application entry point
+- `teams_bot_bridge/handlers.py` - Message handlers
+- `teams_bot_bridge/Dockerfile` - Cloud Run deployment
+- `docs/TEAMS_SDK_INTEGRATION.md` - Complete setup guide
+
+### 2) Business-scenario validation
+Validate realistic retail questions across:
 - store performance
 - ranking and comparison questions
 - daily summary flow
 - inventory-relevant operational scenarios
 - recommendation quality
 
-### 2) Teams / Copilot integration
-The Teams/Copilot layer is downstream of the API contract and business validation. It should be added only after the API is proven stable and the business answers are acceptable in end-user scenarios.
-
 ### 3) Formal regression checks
-Keep the documented bearer-token smoke test as the default regression check for deployment/auth updates, but do not treat it as a replacement for business scenario validation.
+Keep the documented bearer-token smoke test as the default regression check for deployment/auth updates.
 
 ---
 
